@@ -478,32 +478,73 @@ table{min-width:520px;}
   </div>
 </div>
 
-<!-- ===== PORTAIL D'ACCUEIL MULTI-LYCÉES ===== -->
-<div id="portal" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);z-index:99998;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 20px;">
-  <div style="width:100%;max-width:760px;">
-    <div style="text-align:center;margin-bottom:36px;">
-      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:8px 20px;margin-bottom:20px;">
-        <span style="font-size:14px;font-weight:900;color:#fff;letter-spacing:2px;">GAP</span>
-        <span style="width:1px;height:14px;background:rgba(255,255,255,.3);"></span>
-        <span style="font-size:11px;color:rgba(255,255,255,.6);">Gestion des Absences des Professeurs</span>
+<!-- ===== PAGE CONNEXION UNIQUE ===== -->
+<div id="portal" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);z-index:99998;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:24px;width:420px;max-width:94vw;box-shadow:0 40px 100px rgba(0,0,0,.5);overflow:hidden;">
+    <!-- En-tête -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#2c3e7a,#2980b9);padding:32px 36px 28px;text-align:center;">
+      <div id="portal-logo" style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px;font-weight:900;color:#fff;">GAP</div>
+      <h1 style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;margin-bottom:4px;">GAP</h1>
+      <p style="font-size:12px;color:rgba(255,255,255,.6);">Gestion des Absences des Professeurs</p>
+    </div>
+    <!-- Formulaire -->
+    <div style="padding:28px 32px 24px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Identifiant lycée</label>
+        <input type="text" id="portal-user" placeholder="ex: pk12" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('portal-pass').focus()" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;transition:all .2s;" onfocus="this.style.borderColor='#2980b9'" onblur="this.style.borderColor='#e2e8f0'"/>
       </div>
-      <h1 style="font-size:28px;font-weight:900;color:#fff;margin-bottom:8px;">Choisir un établissement</h1>
-      <p style="font-size:13px;color:rgba(255,255,255,.5);">Sélectionnez un lycée ou configurez-en un nouveau</p>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Mot de passe</label>
+        <input type="password" id="portal-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')portalLogin()" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;transition:all .2s;" onfocus="this.style.borderColor='#2980b9'" onblur="this.style.borderColor='#e2e8f0'"/>
+      </div>
+      <div id="portal-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px;font-size:12px;color:#dc2626;margin-bottom:14px;text-align:center;"></div>
+      <button onclick="portalLogin()" id="portal-btn" style="width:100%;background:linear-gradient(135deg,#1a1a2e,#2980b9);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;">🔓 Se connecter</button>
+      <div style="text-align:center;margin-top:16px;">
+        <span id="portal-loader-txt" style="display:none;font-size:12px;color:#64748b;">☁️ Connexion en cours...</span>
+      </div>
     </div>
-    <div id="portal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px;"></div>
-    <div style="text-align:center;">
-      <button onclick="newLycee()" style="background:linear-gradient(135deg,#27ae60,#2980b9);color:#fff;border:none;border-radius:14px;padding:14px 36px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.3);">➕ Configurer un nouveau lycée</button>
-    </div>
-    <div style="text-align:center;margin-top:24px;font-size:10px;color:rgba(255,255,255,.2);">Conçu avec ♥️ par Neiman Galab</div>
+    <div style="text-align:center;padding:0 32px 20px;font-size:10px;color:#94a3b8;">Conçu avec ♥️ par Neiman Galab</div>
   </div>
-  <!-- Loader -->
+  <!-- Loader plein écran -->
   <div id="portal-loader" style="display:none;position:fixed;inset:0;background:rgba(15,12,41,.9);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
     <div style="font-size:48px;">☁️</div>
     <p style="color:#fff;font-size:14px;font-weight:700;">Chargement...</p>
   </div>
 </div>
 
-<!-- ===== LOGIN PROVISEUR ===== -->
+<!-- ===== PAGE SETUP (URL ?setup=clé) ===== -->
+<div id="setup-page" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#1a0530 0%,#2d1060 50%,#1a0530 100%);z-index:99997;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
+  <div style="background:#fff;border-radius:20px;width:500px;max-width:96vw;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.5);">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border-radius:50px;padding:6px 16px;font-size:11px;font-weight:700;margin-bottom:12px;">⚙️ ADMINISTRATION GAP</div>
+      <h2 style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">Configurer un lycée</h2>
+      <p style="font-size:12px;color:#64748b;">Créez un compte d'accès pour un nouvel établissement</p>
+    </div>
+    <!-- Liste lycées existants -->
+    <div id="setup-list" style="margin-bottom:20px;max-height:200px;overflow-y:auto;"></div>
+    <!-- Formulaire nouveau lycée -->
+    <div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px solid #e2e8f0;">
+      <h3 style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">➕ Nouveau lycée</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Identifiant *</label>
+          <input type="text" id="setup-user" placeholder="ex: pk12" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Mot de passe *</label>
+          <input type="password" id="setup-pass" placeholder="••••••••" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;"/>
+        </div>
+      </div>
+      <div id="setup-err" style="display:none;color:#e74c3c;font-size:12px;margin-bottom:8px;"></div>
+      <button onclick="setupCreateAccount()" style="width:100%;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✅ Créer le compte — lancer la configuration</button>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <a href="?" style="font-size:11px;color:#94a3b8;text-decoration:none;">← Retour à la connexion</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN PROVISEUR =====<!-- ===== LOGIN PROVISEUR ===== -->
 <div id="ls" style="display:none;">
   <div class="lb">
     <div style="text-align:center;margin-bottom:20px;">
@@ -523,9 +564,7 @@ table{min-width:520px;}
     <div style="margin-top:14px;text-align:center;">
       <button onclick="showAdminLogin()" style="background:rgba(142,68,173,.12);border:1px solid rgba(142,68,173,.3);color:#8e44ad;border-radius:10px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;width:100%;">⚙️ Accès Administrateur</button>
     </div>
-    <div style="margin-top:10px;text-align:center;">
-      <button onclick="window.location.href=window.location.pathname" style="background:none;border:none;color:#94a3b8;font-size:11px;cursor:pointer;text-decoration:underline;">🏫 Changer de lycée</button>
-    </div>
+
     <div class="lb-f" id="lb-credit">Conçu avec ♥️ par Neiman Galab</div>
   </div>
 </div>
@@ -997,6 +1036,8 @@ var FILE_ID=DAT.file_id||null;
 var db=null;
 var fbEnabled=false;
 var fbSyncing=false;
+var MASTER_PWD=null; // Hash du mot de passe maître (admin plateforme)
+var MASTER_KEY='gap_master_pwd'; // Clé localStorage
 var FB_CFG={
   apiKey:"AIzaSyBAVz383i1TdYVIZrdc1zrCoUnUi1lhHek",
   authDomain:"gap-lycees.firebaseapp.com",
@@ -1248,16 +1289,18 @@ async function wzFinish(){
   autoSaveLocal();
   if(fbEnabled&&db) saveToFirebase(buildSaveObj());
 
-  // Fermer le wizard
+  // Mettre à jour le nom du lycée dans le compte Firebase
+  if(fbEnabled&&db&&FILE_ID){
+    db.collection('comptes').where('file_id','==',FILE_ID).get().then(function(snap){
+      snap.forEach(function(d){d.ref.update({lycee:config.lycee||''});});
+    }).catch(function(){});
+  }
+
+  // Fermer le wizard, afficher le login proviseur
   document.getElementById('wizard').classList.add('hidden');
-
-  // Générer le lien unique pour ce lycée
-  var newUrl=window.location.pathname+'?lycee='+FILE_ID;
-  history.replaceState(null,'',newUrl);
-
-  // Afficher le login
+  document.getElementById('portal').style.display='none';
   showLoginScreen();
-  toast('🎉 Configuration terminée ! Votre lien : '+newUrl);
+  toast('🎉 Configuration terminée ! Connectez-vous.');
 }
 
 // ===== DÉMARRAGE =====
@@ -1270,9 +1313,32 @@ window.addEventListener('load',function(){
     }
   }catch(e){console.warn('Firebase:',e);}
 
-  // 2. Lire paramètre URL ?lycee=FILE_ID
+  // 2. Lire paramètres URL
   var urlParams=new URLSearchParams(window.location.search);
   var lyceeParam=urlParams.get('lycee');
+
+  // ?setup=KEY → page de configuration admin
+  var setupKey=urlParams.get('setup');
+  if(setupKey){
+    if(setupKey===SETUP_KEY){showSetup();return;}
+    else{showPortal();return;}
+  }
+
+  // Session active ? → recharger l'app directement
+  var session=null;
+  try{var ss=sessionStorage.getItem('gap_session');if(ss)session=JSON.parse(ss);}catch(e){}
+  if(session&&session.file_id){
+    // Session trouvée → charger le lycée directement
+    var lsData=null;
+    try{var s2=localStorage.getItem('gap_data_'+session.file_id);if(s2)lsData=JSON.parse(s2);}catch(e){}
+    if(lsData&&lsData.config&&lsData.pwd_main){
+      loadFromObj(lsData);
+      document.getElementById('portal').style.display='none';
+      openApp();
+      if(fbEnabled&&db)bgSyncFirebase(session.file_id);
+      return;
+    }
+  }
 
   // 3. Avec paramètre URL → charger ce lycée
   if(lyceeParam){
@@ -1284,39 +1350,37 @@ window.addEventListener('load',function(){
     }catch(e){}
 
     if(lsData&&lsData.config&&lsData.pwd_main){
-      // Données locales OK → charger et afficher login
+      // Données locales OK → afficher login proviseur (accès direct par URL)
       loadFromObj(lsData);
       document.getElementById('wizard').classList.add('hidden');
+      document.getElementById('portal').style.display='none';
       showLoginScreen();
-      // Sync Firebase silencieux en arrière-plan
       if(fbEnabled&&db)bgSyncFirebase(lyceeParam);
       return;
     }
 
-    // Pas de données locales → essayer Firebase
+    // Pas en local → charger depuis Firebase
     if(fbEnabled&&db){
-      showPortalLoader('☁️ Chargement depuis le cloud...');
+      showPortalLoader('☁️ Chargement...');
       db.collection('lycees').doc(lyceeParam).get().then(function(doc){
         hidePortalLoader();
         if(doc.exists){
           try{
             var fd=JSON.parse(doc.data().payload);
-            loadFromObj(fd);
-            autoSaveLocal(); // Sauvegarder localement pour la prochaine fois
+            loadFromObj(fd);autoSaveLocal();
             document.getElementById('wizard').classList.add('hidden');
+            document.getElementById('portal').style.display='none';
             showLoginScreen();
           }catch(e){showPortal();}
         }else{showPortal();}
       }).catch(function(){hidePortalLoader();showPortal();});
       return;
     }
-
-    // Ni local ni Firebase → portail
     showPortal();
     return;
   }
 
-  // 4. Sans paramètre URL → portail d'accueil
+  // Sans paramètre URL → page de connexion centrale
   showPortal();
 });
 
@@ -1389,11 +1453,14 @@ function logout(){
   if(unsaved&&!confirm('Des données non sauvegardées seront perdues. Quitter ?'))return;
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
-  document.getElementById('lpwd').value='';
-  document.getElementById('lerr').style.display='none';
+  document.getElementById('ls').style.display='none';
   isAdmin=false;
-  // Revenir à la page de connexion du lycée (garder le paramètre URL)
-  document.getElementById('ls').style.display='flex';
+  // Revenir à la page de connexion centrale, effacer l'URL
+  history.replaceState(null,'',window.location.pathname);
+  document.getElementById('portal-user').value='';
+  document.getElementById('portal-pass').value='';
+  document.getElementById('portal-err').style.display='none';
+  showPortal();
 }
 
 // ===== OUVERTURE APPLICATION =====
@@ -1537,14 +1604,9 @@ function init(){
     var dot=document.getElementById('fb-dot');
     var status=document.getElementById('fb-status');
     if(!dot||!status)return;
-    if(fbEnabled&&db){
-      dot.style.background='#27ae60';
-      status.textContent='Cloud connecté';
-    }else{
-      dot.style.background='#e74c3c';
-      status.textContent='Mode hors ligne';
-    }
-  },1500);
+    if(fbEnabled&&db){dot.style.background='#27ae60';status.textContent='Cloud connecté';}
+    else{dot.style.background='#e74c3c';status.textContent='Mode hors ligne';}
+  },1200);
   document.getElementById('hero-an').textContent=an.replace('-','–');
   setInterval(function(){if(unsaved)autoSaveLocal();},60000);
 }
@@ -2893,91 +2955,205 @@ function ajouterAnnee(){
 }
 
 // Exposer pour le bouton éventuel
-// ===== PORTAIL MULTI-LYCÉES =====
+// ===== CONNEXION UNIQUE + SETUP =====
+
+// Clé maître pour accéder à /setup (à changer en production)
+var SETUP_KEY='GAP_ADMIN_2025';
+
 function showPortal(){
   document.getElementById('wizard').classList.add('hidden');
   document.getElementById('ls').style.display='none';
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
-  var portal=document.getElementById('portal');
-  if(portal)portal.style.display='flex';
-  renderPortal();
+  document.getElementById('portal').style.display='flex';
+  document.getElementById('setup-page').style.display='none';
+  // Focus sur le champ username
+  setTimeout(function(){
+    var u=document.getElementById('portal-user');
+    if(u)u.focus();
+  },200);
 }
 
-function renderPortal(){
-  var lycees=[];
-  for(var i=0;i<localStorage.length;i++){
-    var k=localStorage.key(i);
-    if(k&&k.startsWith('gap_data_')){
-      try{
-        var d=JSON.parse(localStorage.getItem(k));
-        if(d&&d.config&&d.config.lycee){
-          lycees.push({id:d.file_id,nom:d.config.lycee,ville:d.config.ville||'',an:d.an||'',logo:d.logo||null});
-        }
-      }catch(e){}
+async function portalLogin(){
+  var user=document.getElementById('portal-user').value.trim().toLowerCase();
+  var pass=document.getElementById('portal-pass').value;
+  var err=document.getElementById('portal-err');
+  var btn=document.getElementById('portal-btn');
+  var loader=document.getElementById('portal-loader-txt');
+  if(!user||!pass){err.textContent='Veuillez remplir tous les champs.';err.style.display='block';return;}
+  err.style.display='none';
+  btn.disabled=true;btn.textContent='Connexion...';
+  if(loader)loader.style.display='block';
+  // Vérifier dans Firebase
+  if(!fbEnabled||!db){
+    err.textContent='⚠️ Connexion internet requise pour la première connexion.';
+    err.style.display='block';btn.disabled=false;btn.textContent='🔓 Se connecter';
+    if(loader)loader.style.display='none';
+    // Essayer localStorage comme fallback
+    var lsAccount=null;
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k==='gap_account_'+user){try{lsAccount=JSON.parse(localStorage.getItem(k));}catch(e){}}
     }
+    if(lsAccount){
+      var h=await sha256(pass);
+      if(h===lsAccount.pwd_hash){
+        err.style.display='none';
+        sessionStorage.setItem('gap_session',JSON.stringify({user:user,file_id:lsAccount.file_id}));
+        loadLycee(lsAccount.file_id, true);
+        return;
+      }
+    }
+    return;
   }
-  var grid=document.getElementById('portal-grid');
-  if(!grid)return;
-  if(lycees.length){
-    grid.innerHTML=lycees.map(function(l){
-      var url=window.location.pathname+'?lycee='+l.id;
-      return '<a href="'+url+'" style="text-decoration:none;">'+
-        '<div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);border:2px solid #e2e8f0;transition:all .2s;">'+
-        '<div style="width:56px;height:56px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#1a1a2e,#2980b9);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">'+(l.logo?'<img src="'+l.logo+'" style="width:100%;height:100%;object-fit:cover;"/>':'<span style="font-size:22px;font-weight:900;color:#fff;">'+l.nom.charAt(0)+'</span>')+'</div>'+
-        '<div style="font-size:14px;font-weight:800;color:#1a1a2e;text-align:center;margin-bottom:4px;">'+l.nom+'</div>'+
-        '<div style="font-size:11px;color:#64748b;text-align:center;">'+l.ville+'</div>'+
-        '<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:4px;">'+l.an+'</div>'+
-        '</div></a>';
-    }).join('');
+  var h=await sha256(pass);
+  db.collection('comptes').doc(user).get().then(async function(doc){
+    btn.disabled=false;btn.textContent='🔓 Se connecter';
+    if(loader)loader.style.display='none';
+    if(!doc.exists){
+      err.textContent='❌ Identifiant introuvable.';err.style.display='block';return;
+    }
+    var acc=doc.data();
+    if(acc.pwd_hash!==h){
+      err.textContent='❌ Mot de passe incorrect.';err.style.display='block';return;
+    }
+    // Sauvegarder en local pour usage hors-ligne
+    localStorage.setItem('gap_account_'+user,JSON.stringify(acc));
+    // Session active (persiste jusqu'à fermeture du navigateur)
+    sessionStorage.setItem('gap_session',JSON.stringify({user:user,file_id:acc.file_id}));
+    loadLycee(acc.file_id, true); // true = accès direct sans re-login
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='🔓 Se connecter';
+    if(loader)loader.style.display='none';
+    err.textContent='⚠️ Erreur réseau. Réessayez.';err.style.display='block';
+  });
+}
+
+function loadLycee(fileId, skipLogin){
+  // skipLogin=true → vient de portalLogin() → openApp() direct sans page login proviseur
+  showPortalLoader('☁️ Chargement de votre espace...');
+  // 1. Chercher en local d'abord (marche hors-ligne)
+  var lsData=null;
+  try{var s=localStorage.getItem('gap_data_'+fileId);if(s)lsData=JSON.parse(s);}catch(e){}
+  if(lsData&&lsData.config&&lsData.pwd_main){
+    hidePortalLoader();
+    loadFromObj(lsData);
+    document.getElementById('portal').style.display='none';
+    if(skipLogin){
+      // Connexion via portail → accès direct à l'app
+      openApp();
+    }else{
+      // Accès via URL directe → demander le mot de passe proviseur
+      showLoginScreen();
+    }
+    if(fbEnabled&&db)bgSyncFirebase(fileId);
+    return;
+  }
+  // 2. Pas de données locales → charger depuis Firebase
+  if(fbEnabled&&db){
+    db.collection('lycees').doc(fileId).get().then(function(doc){
+      hidePortalLoader();
+      if(doc.exists){
+        try{
+          var fd=JSON.parse(doc.data().payload);
+          loadFromObj(fd);
+          autoSaveLocal();
+          document.getElementById('portal').style.display='none';
+          if(skipLogin){openApp();}else{showLoginScreen();}
+        }catch(e){showPortalErr('Erreur de lecture des données.');}
+      }else{
+        showPortalErr('Espace lycée introuvable. Contactez l’administrateur.');
+      }
+    }).catch(function(){
+      hidePortalLoader();
+      showPortalErr('Erreur réseau. Vérifiez votre connexion.');
+    });
   }else{
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:32px;">'+
-    '<div style="font-size:48px;margin-bottom:12px;">🏫</div>'+
-    '<p style="font-size:14px;">Aucun lycée configuré.<br>Cliquez "Configurer un nouveau lycée".</p></div>';
+    hidePortalLoader();
+    showPortalErr('Connexion internet requise pour le premier chargement.');
   }
 }
 
-function newLycee(){
-  var portal=document.getElementById('portal');
-  if(portal)portal.style.display='none';
-  wzDiscs=[];wzSalles=[];wzProfs=[];
-  ['w-lycee','w-ville','w-devise','w-email','w-prov','w-pwd1','w-pwd1c','w-pwd2','w-pwd3'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.value='';
-  });
-  document.getElementById('w-pays').value='République de Djibouti';
-  document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
-  wzRenderDiscs();wzRenderProfs();wzPreviewSalles();
-  wzSetStep(1);
-  document.getElementById('wizard').classList.remove('hidden');
+function showPortalErr(msg){
+  var err=document.getElementById('portal-err');
+  if(err){err.textContent=msg;err.style.display='block';}
 }
 
 function showPortalLoader(msg){
   var el=document.getElementById('portal-loader');
-  if(!el)return;
-  el.style.display='flex';
-  var p=el.querySelector('p');if(p)p.textContent=msg||'Chargement...';
+  if(el){el.style.display='flex';var p=el.querySelector('p');if(p)p.textContent=msg||'Chargement...';}
 }
 function hidePortalLoader(){
-  var el=document.getElementById('portal-loader');
-  if(el)el.style.display='none';
+  var el=document.getElementById('portal-loader');if(el)el.style.display='none';
+}
+
+// ===== PAGE SETUP =====
+function showSetup(){
+  document.getElementById('portal').style.display='none';
+  document.getElementById('setup-page').style.display='flex';
+  renderSetupList();
+}
+
+function renderSetupList(){
+  var el=document.getElementById('setup-list');if(!el)return;
+  if(!fbEnabled||!db){el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;">Firebase requis pour lister les comptes.</p>';return;}
+  db.collection('comptes').get().then(function(snap){
+    if(snap.empty){el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;padding:8px;">Aucun lycée configuré.</p>';return;}
+    var rows=snap.docs.map(function(d){
+      var acc=d.data();
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;">'+
+        '<div><span style="font-weight:700;font-size:13px;">'+d.id+'</span>'+
+        '<span style="font-size:11px;color:#64748b;margin-left:8px;">'+(acc.lycee||'')+'</span></div>'+
+        '<button onclick="setupDelAccount(this.dataset.u)" data-u="'+d.id+'" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">🗑</button>'+
+        '</div>';
+    }).join('');
+    el.innerHTML='<div style="margin-bottom:10px;"><p style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">COMPTES EXISTANTS</p>'+rows+'</div>';
+  }).catch(function(){});
+}
+
+async function setupCreateAccount(){
+  var user=document.getElementById('setup-user').value.trim().toLowerCase();
+  var pass=document.getElementById('setup-pass').value;
+  var err=document.getElementById('setup-err');
+  if(!user||!pass){err.textContent='Identifiant et mot de passe requis.';err.style.display='block';return;}
+  if(!fbEnabled||!db){err.textContent='Firebase requis.';err.style.display='block';return;}
+  // Vérifier si compte existe déjà
+  var doc=await db.collection('comptes').doc(user).get();
+  if(doc.exists){err.textContent='Cet identifiant existe déjà.';err.style.display='block';return;}
+  var h=await sha256(pass);
+  var newFileId='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
+  await db.collection('comptes').doc(user).set({pwd_hash:h,file_id:newFileId,lycee:'',created:new Date().toISOString()});
+  // Sauvegarder en local
+  localStorage.setItem('gap_account_'+user,JSON.stringify({pwd_hash:h,file_id:newFileId}));
+  // Lancer la configuration pour ce lycée
+  FILE_ID=newFileId;
+  document.getElementById('setup-page').style.display='none';
+  // Lancer wizard
+  wzDiscs=[];wzSalles=[];wzProfs=[];
+  ['w-lycee','w-ville','w-devise','w-email','w-prov','w-pwd1','w-pwd1c','w-pwd2','w-pwd3'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.value='';});
+  document.getElementById('w-pays').value='République de Djibouti';
+  document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
+  wzRenderDiscs();wzRenderProfs();wzPreviewSalles();wzSetStep(1);
+  document.getElementById('wizard').classList.remove('hidden');
+  toast('✅ Compte "'+user+'" créé ! Configurez maintenant le lycée.');
+}
+
+function setupDelAccount(user){
+  if(!confirm('Supprimer le compte "'+user+'" ?'))return;
+  db.collection('comptes').doc(user).delete().then(function(){
+    localStorage.removeItem('gap_account_'+user);
+    renderSetupList();toast('Compte supprimé.');
+  });
 }
 
 function bgSyncFirebase(fileId){
   if(!fbEnabled||!db)return;
   db.collection('lycees').doc(fileId).get().then(function(doc){
-    if(doc.exists){
-      try{
-        var fd=JSON.parse(doc.data().payload);
-        if(fd&&fd.file_id===fileId){
-          loadFromObj(fd);
-          autoSaveLocal();
-          var si=document.getElementById('si-auto');
-          if(si)si.innerHTML='<span style="color:#6ee7b7;">☁️ Synchronisé</span>';
-        }
-      }catch(e){}
-    }
+    if(doc.exists){try{var fd=JSON.parse(doc.data().payload);if(fd&&fd.file_id===fileId){loadFromObj(fd);autoSaveLocal();}}catch(e){}}
   }).catch(function(){});
 }
+
+function newLycee(){showSetup();}
 
 window.ajouterAnnee=ajouterAnnee;
 
