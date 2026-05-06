@@ -27,6 +27,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a1a2e;}
 .logo-circle-sm img{width:100%;height:100%;object-fit:cover;}
 .logo-upload-hint{font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:8px;cursor:pointer;}
 
+.portal-card{text-decoration:none;display:block;}
+.portal-card div:first-child{transition:all .2s;}
+.portal-card:hover div:first-child{border-color:#2980b9 !important;transform:translateY(-4px);box-shadow:0 8px 30px rgba(41,128,185,.2) !important;}
 /* ===== WIZARD ===== */
 #wizard{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);display:flex;align-items:center;justify-content:center;overflow-y:auto;}
 #wizard.hidden{display:none;}
@@ -1235,9 +1238,6 @@ async function wzFinish(){
 
   // Générer un FILE_ID unique pour ce lycée
   FILE_ID='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
-
-  // Générer FILE_ID unique pour ce lycée
-  FILE_ID='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
   // Mettre à jour les données globales
   DAT.config=config;DAT.an=an;DAT.disc=DISC;DAT.salles=SALLES;
   DAT.profs=profs;DAT.abs=absMap;DAT.cg=cgMap;DAT.cga=cgaMap;
@@ -1262,30 +1262,62 @@ async function wzFinish(){
 
 // ===== DÉMARRAGE =====
 window.addEventListener('load',function(){
-  // PRIORITÉ 1 : données embarquées dans le fichier HTML lui-même
-  // C'est la source de vérité — chaque fichier porte ses propres données
-  if(DAT.config&&DAT.pwd_main){
-    loadFromObj(DAT);
-    // Si le fichier a un FILE_ID, vérifier si le localStorage est plus récent
-    if(FILE_ID){
-      var saved=localStorage.getItem('gap_data_'+FILE_ID);
-      if(saved){
-        try{
-          var d=JSON.parse(saved);
-          // Utiliser le localStorage seulement s'il appartient bien à ce fichier
-          if(d.file_id&&d.file_id===FILE_ID){
-            loadFromObj(d);
-          }
-        }catch(e){}
-      }
+  // 1. Init Firebase
+  try{
+    if(typeof firebase!=='undefined'){
+      if(!firebase.apps||!firebase.apps.length)firebase.initializeApp(FB_CFG);
+      db=firebase.firestore();fbEnabled=true;
     }
-    document.getElementById('wizard').classList.add('hidden');
-    showLoginScreen();
+  }catch(e){console.warn('Firebase:',e);}
+
+  // 2. Lire paramètre URL ?lycee=FILE_ID
+  var urlParams=new URLSearchParams(window.location.search);
+  var lyceeParam=urlParams.get('lycee');
+
+  // 3. Avec paramètre URL → charger ce lycée
+  if(lyceeParam){
+    // Chercher dans localStorage d'abord (marche hors-ligne)
+    var lsData=null;
+    try{
+      var s=localStorage.getItem('gap_data_'+lyceeParam);
+      if(s)lsData=JSON.parse(s);
+    }catch(e){}
+
+    if(lsData&&lsData.config&&lsData.pwd_main){
+      // Données locales OK → charger et afficher login
+      loadFromObj(lsData);
+      document.getElementById('wizard').classList.add('hidden');
+      showLoginScreen();
+      // Sync Firebase silencieux en arrière-plan
+      if(fbEnabled&&db)bgSyncFirebase(lyceeParam);
+      return;
+    }
+
+    // Pas de données locales → essayer Firebase
+    if(fbEnabled&&db){
+      showPortalLoader('☁️ Chargement depuis le cloud...');
+      db.collection('lycees').doc(lyceeParam).get().then(function(doc){
+        hidePortalLoader();
+        if(doc.exists){
+          try{
+            var fd=JSON.parse(doc.data().payload);
+            loadFromObj(fd);
+            autoSaveLocal(); // Sauvegarder localement pour la prochaine fois
+            document.getElementById('wizard').classList.add('hidden');
+            showLoginScreen();
+          }catch(e){showPortal();}
+        }else{showPortal();}
+      }).catch(function(){hidePortalLoader();showPortal();});
+      return;
+    }
+
+    // Ni local ni Firebase → portail
+    showPortal();
     return;
   }
-  // PRIORITÉ 2 : fichier vierge sans configuration — afficher le wizard
-  document.getElementById('wizard').classList.remove('hidden');
-  wzRenderProfs();
+
+  // 4. Sans paramètre URL → portail d'accueil
+  showPortal();
 });
 
 function loadFromObj(d){
@@ -2861,6 +2893,92 @@ function ajouterAnnee(){
 }
 
 // Exposer pour le bouton éventuel
+// ===== PORTAIL MULTI-LYCÉES =====
+function showPortal(){
+  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('ls').style.display='none';
+  document.getElementById('sb').style.display='none';
+  document.getElementById('main').style.display='none';
+  var portal=document.getElementById('portal');
+  if(portal)portal.style.display='flex';
+  renderPortal();
+}
+
+function renderPortal(){
+  var lycees=[];
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k&&k.startsWith('gap_data_')){
+      try{
+        var d=JSON.parse(localStorage.getItem(k));
+        if(d&&d.config&&d.config.lycee){
+          lycees.push({id:d.file_id,nom:d.config.lycee,ville:d.config.ville||'',an:d.an||'',logo:d.logo||null});
+        }
+      }catch(e){}
+    }
+  }
+  var grid=document.getElementById('portal-grid');
+  if(!grid)return;
+  if(lycees.length){
+    grid.innerHTML=lycees.map(function(l){
+      var url=window.location.pathname+'?lycee='+l.id;
+      return '<a href="'+url+'" style="text-decoration:none;">'+
+        '<div style="background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,.08);border:2px solid #e2e8f0;transition:all .2s;">'+
+        '<div style="width:56px;height:56px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#1a1a2e,#2980b9);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">'+(l.logo?'<img src="'+l.logo+'" style="width:100%;height:100%;object-fit:cover;"/>':'<span style="font-size:22px;font-weight:900;color:#fff;">'+l.nom.charAt(0)+'</span>')+'</div>'+
+        '<div style="font-size:14px;font-weight:800;color:#1a1a2e;text-align:center;margin-bottom:4px;">'+l.nom+'</div>'+
+        '<div style="font-size:11px;color:#64748b;text-align:center;">'+l.ville+'</div>'+
+        '<div style="font-size:10px;color:#94a3b8;text-align:center;margin-top:4px;">'+l.an+'</div>'+
+        '</div></a>';
+    }).join('');
+  }else{
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:32px;">'+
+    '<div style="font-size:48px;margin-bottom:12px;">🏫</div>'+
+    '<p style="font-size:14px;">Aucun lycée configuré.<br>Cliquez "Configurer un nouveau lycée".</p></div>';
+  }
+}
+
+function newLycee(){
+  var portal=document.getElementById('portal');
+  if(portal)portal.style.display='none';
+  wzDiscs=[];wzSalles=[];wzProfs=[];
+  ['w-lycee','w-ville','w-devise','w-email','w-prov','w-pwd1','w-pwd1c','w-pwd2','w-pwd3'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('w-pays').value='République de Djibouti';
+  document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
+  wzRenderDiscs();wzRenderProfs();wzPreviewSalles();
+  wzSetStep(1);
+  document.getElementById('wizard').classList.remove('hidden');
+}
+
+function showPortalLoader(msg){
+  var el=document.getElementById('portal-loader');
+  if(!el)return;
+  el.style.display='flex';
+  var p=el.querySelector('p');if(p)p.textContent=msg||'Chargement...';
+}
+function hidePortalLoader(){
+  var el=document.getElementById('portal-loader');
+  if(el)el.style.display='none';
+}
+
+function bgSyncFirebase(fileId){
+  if(!fbEnabled||!db)return;
+  db.collection('lycees').doc(fileId).get().then(function(doc){
+    if(doc.exists){
+      try{
+        var fd=JSON.parse(doc.data().payload);
+        if(fd&&fd.file_id===fileId){
+          loadFromObj(fd);
+          autoSaveLocal();
+          var si=document.getElementById('si-auto');
+          if(si)si.innerHTML='<span style="color:#6ee7b7;">☁️ Synchronisé</span>';
+        }
+      }catch(e){}
+    }
+  }).catch(function(){});
+}
+
 window.ajouterAnnee=ajouterAnnee;
 
 // ===== RECONFIGURATION =====
