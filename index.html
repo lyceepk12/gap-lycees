@@ -475,6 +475,31 @@ table{min-width:520px;}
   </div>
 </div>
 
+<!-- ===== PORTAIL D'ACCUEIL MULTI-LYCÉES ===== -->
+<div id="portal" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);z-index:99998;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 20px;">
+  <div style="width:100%;max-width:760px;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:8px 20px;margin-bottom:20px;">
+        <span style="font-size:14px;font-weight:900;color:#fff;letter-spacing:2px;">GAP</span>
+        <span style="width:1px;height:14px;background:rgba(255,255,255,.3);"></span>
+        <span style="font-size:11px;color:rgba(255,255,255,.6);">Gestion des Absences des Professeurs</span>
+      </div>
+      <h1 style="font-size:28px;font-weight:900;color:#fff;margin-bottom:8px;">Choisir un établissement</h1>
+      <p style="font-size:13px;color:rgba(255,255,255,.5);">Sélectionnez un lycée ou configurez-en un nouveau</p>
+    </div>
+    <div id="portal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px;"></div>
+    <div style="text-align:center;">
+      <button onclick="newLycee()" style="background:linear-gradient(135deg,#27ae60,#2980b9);color:#fff;border:none;border-radius:14px;padding:14px 36px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.3);">➕ Configurer un nouveau lycée</button>
+    </div>
+    <div style="text-align:center;margin-top:24px;font-size:10px;color:rgba(255,255,255,.2);">Conçu avec ♥️ par Neiman Galab</div>
+  </div>
+  <!-- Loader -->
+  <div id="portal-loader" style="display:none;position:fixed;inset:0;background:rgba(15,12,41,.9);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+    <div style="font-size:48px;">☁️</div>
+    <p style="color:#fff;font-size:14px;font-weight:700;">Chargement...</p>
+  </div>
+</div>
+
 <!-- ===== LOGIN PROVISEUR ===== -->
 <div id="ls" style="display:none;">
   <div class="lb">
@@ -494,6 +519,9 @@ table{min-width:520px;}
     <div class="lb-e" id="lerr">❌ Mot de passe incorrect</div>
     <div style="margin-top:14px;text-align:center;">
       <button onclick="showAdminLogin()" style="background:rgba(142,68,173,.12);border:1px solid rgba(142,68,173,.3);color:#8e44ad;border-radius:10px;padding:9px 20px;font-size:12px;font-weight:700;cursor:pointer;width:100%;">⚙️ Accès Administrateur</button>
+    </div>
+    <div style="margin-top:10px;text-align:center;">
+      <button onclick="window.location.href=window.location.pathname" style="background:none;border:none;color:#94a3b8;font-size:11px;cursor:pointer;text-decoration:underline;">🏫 Changer de lycée</button>
     </div>
     <div class="lb-f" id="lb-credit">Conçu avec ♥️ par Neiman Galab</div>
   </div>
@@ -1216,15 +1244,20 @@ async function wzFinish(){
   DAT.edt=edtMap;DAT.photos=photos;DAT.al=alLues;DAT.nid=nid;
   DAT.pwd_main=h1;DAT.pwd_del=h2;DAT.pwd_adm=h3;
 
-  // Fermer le wizard et afficher le login
+  // Sauvegarder immédiatement
+  autoSaveLocal();
+  if(fbEnabled&&db) saveToFirebase(buildSaveObj());
+
+  // Fermer le wizard
   document.getElementById('wizard').classList.add('hidden');
 
-  // Sauvegarder immédiatement dans le fichier (localStorage de secours)
-  autoSaveLocal();
+  // Générer le lien unique pour ce lycée
+  var newUrl=window.location.pathname+'?lycee='+FILE_ID;
+  history.replaceState(null,'',newUrl);
 
-  // Afficher le login avec les nouvelles infos
+  // Afficher le login
   showLoginScreen();
-  toast('🎉 Configuration terminée ! Connectez-vous maintenant.');
+  toast('🎉 Configuration terminée ! Votre lien : '+newUrl);
 }
 
 // ===== DÉMARRAGE =====
@@ -1326,8 +1359,9 @@ function logout(){
   document.getElementById('main').style.display='none';
   document.getElementById('lpwd').value='';
   document.getElementById('lerr').style.display='none';
-  document.getElementById('ls').style.display='flex';
   isAdmin=false;
+  // Revenir à la page de connexion du lycée (garder le paramètre URL)
+  document.getElementById('ls').style.display='flex';
 }
 
 // ===== OUVERTURE APPLICATION =====
