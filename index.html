@@ -248,7 +248,7 @@ table{min-width:520px;}
 <script id="D" type="application/json">{"abs":{},"cg":{},"cga":{},"edt":{},"nid":1,"profs":[],"photos":{},"an":"2025-2026","al":{},"config":null,"file_id":null}</script>
 
 <!-- ===== ASSISTANT DE CONFIGURATION ===== -->
-<div id="wizard">
+<div id="wizard" style="display:none;">
   <div class="wz-box">
     <div class="wz-header">
       <h1>GAP <em>Universel</em></h1>
@@ -1353,7 +1353,7 @@ async function wzFinish(){
   localStorage.setItem('gap_current',JSON.stringify({file_id:FILE_ID,admin:false,t:Date.now()}));
 
   // Fermer le wizard → ouvrir l'app directement
-  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('wizard').style.display='none';
   document.getElementById('portal').style.display='none';
   document.getElementById('ls').style.display='none';
   openApp();
@@ -1444,7 +1444,7 @@ window.addEventListener('load',function(){
     if(lsData&&lsData.config&&lsData.pwd_main){
       // Données locales OK → afficher login proviseur (accès direct par URL)
       loadFromObj(lsData);
-      document.getElementById('wizard').classList.add('hidden');
+      document.getElementById('wizard').style.display='none';
       document.getElementById('portal').style.display='none';
       showLoginScreen();
       if(fbEnabled&&db)bgSyncFirebase(lyceeParam);
@@ -1460,7 +1460,7 @@ window.addEventListener('load',function(){
           try{
             var fd=JSON.parse(doc.data().payload);
             loadFromObj(fd);autoSaveLocal();
-            document.getElementById('wizard').classList.add('hidden');
+            document.getElementById('wizard').style.display='none';
             document.getElementById('portal').style.display='none';
             showLoginScreen();
           }catch(e){showPortal();}
@@ -3061,7 +3061,7 @@ function ajouterAnnee(){
 var SETUP_KEY='GAP_ADMIN_2025';
 
 function showPortal(){
-  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('wizard').style.display='none';
   document.getElementById('ls').style.display='none';
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
@@ -3192,7 +3192,7 @@ function hidePortalLoader(){
 function showSetup(){
   // Cacher tout le reste
   document.getElementById('portal').style.display='none';
-  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('wizard').style.display='none';
   document.getElementById('ls').style.display='none';
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
@@ -3345,7 +3345,7 @@ async function setupCreateAccount(){
     document.getElementById('w-pays').value='République de Djibouti';
     document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
     wzRenderDiscs();wzRenderProfs();wzPreviewSalles();wzSetStep(1);
-    document.getElementById('wizard').classList.remove('hidden');
+    document.getElementById('wizard').style.display='flex';
     toast('✅ Compte "'+user+'" créé ! Configurez le lycée.');
   }catch(e){
     btn.disabled=false;btn.textContent='✅ Créer le compte et lancer la configuration';
@@ -3467,7 +3467,7 @@ function relaunchWizard(){
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
   document.getElementById('ls').style.display='none';
-  document.getElementById('wizard').classList.remove('hidden');
+  document.getElementById('wizard').style.display='flex';
   // Vider le localStorage pour repartir proprement
   if(FILE_ID)localStorage.removeItem('gap_data_'+FILE_ID);
   FILE_ID=null;
