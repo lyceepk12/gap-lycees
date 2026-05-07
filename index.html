@@ -667,8 +667,6 @@ table{min-width:520px;}
     <div id="sb-admin-back" style="display:none;margin-bottom:6px;">
       <button onclick="backToSetup()" style="width:100%;padding:9px;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.15);color:#a78bfa;border-radius:10px;cursor:pointer;font-size:11px;font-weight:700;">← Retour Admin GAP</button>
     </div>
-    <button class="sbb sbs" onclick="save()">💾 Sauvegarder &amp; Exporter</button>
-    <button class="sbb" style="background:rgba(39,174,96,.15);color:#6ee7b7;border:1px solid rgba(39,174,96,.3);width:100%;padding:10px;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;margin-bottom:6px;" onclick="syncFromCloud()">☁️ Recharger depuis le cloud</button>
     <button class="sbb sbl2" onclick="logout()">🚪 Déconnexion</button>
     <div id="si" title="État de sauvegarde">—</div>
     <div id="si-auto" style="display:flex;align-items:center;gap:4px;justify-content:center;font-size:9px;color:rgba(39,174,96,.7);padding-bottom:2px;">
@@ -1387,16 +1385,43 @@ window.addEventListener('load',function(){
   var session=null;
   try{var ss=sessionStorage.getItem('gap_session');if(ss)session=JSON.parse(ss);}catch(e){}
   if(session&&session.file_id){
-    // Session trouvée → charger le lycée directement
+    var fileId=session.file_id;
+    // Essayer localStorage d'abord
     var lsData=null;
-    try{var s2=localStorage.getItem('gap_data_'+session.file_id);if(s2)lsData=JSON.parse(s2);}catch(e){}
+    try{var s2=localStorage.getItem('gap_data_'+fileId);if(s2)lsData=JSON.parse(s2);}catch(e){}
     if(lsData&&lsData.config&&lsData.pwd_main){
       loadFromObj(lsData);
+      if(session.admin)isAdmin=true;
       document.getElementById('portal').style.display='none';
       openApp();
-      if(fbEnabled&&db)bgSyncFirebase(session.file_id);
+      if(fbEnabled&&db)bgSyncFirebase(fileId);
       return;
     }
+    // Pas de localStorage → charger depuis Firebase (retour d'un autre appareil)
+    if(fbEnabled&&db){
+      showPortalLoader('☁️ Restauration de la session...');
+      db.collection('lycees').doc(fileId).get().then(function(doc){
+        hidePortalLoader();
+        if(doc.exists){
+          try{
+            var fd=JSON.parse(doc.data().payload);
+            loadFromObj(fd);autoSaveLocal();
+            if(session.admin)isAdmin=true;
+            document.getElementById('portal').style.display='none';
+            openApp();
+          }catch(e){showPortal();}
+        }else{
+          // Lycée introuvable → portail
+          sessionStorage.removeItem('gap_session');
+          showPortal();
+        }
+      }).catch(function(){hidePortalLoader();showPortal();});
+      return;
+    }
+    // Ni local ni Firebase → portail
+    sessionStorage.removeItem('gap_session');
+    showPortal();
+    return;
   }
 
   // 3. Avec paramètre URL → charger ce lycée
