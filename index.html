@@ -526,7 +526,7 @@ table{min-width:520px;}
       <input type="password" id="setup-master-inp" placeholder="Mot de passe administrateur" onkeydown="if(event.key==='Enter')setupAuthCheck()" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:10px;"/>
       <div id="setup-auth-err" style="display:none;color:#e74c3c;font-size:12px;text-align:center;margin-bottom:10px;">❌ Mot de passe incorrect</div>
       <button onclick="setupAuthCheck()" style="width:100%;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🔓 Accéder</button>
-      <div style="text-align:center;"><a href="?" style="font-size:11px;color:#94a3b8;text-decoration:none;">← Retour connexion</a></div>
+      <div style="text-align:center;"><a href="?" onclick="localStorage.removeItem('gap_setup_auth')" style="font-size:11px;color:#94a3b8;text-decoration:none;">← Retour connexion</a></div>
     </div>
   </div>
 
@@ -1350,7 +1350,7 @@ async function wzFinish(){
   }
 
   // Session active pour ce lycée
-  sessionStorage.setItem('gap_session',JSON.stringify({file_id:FILE_ID}));
+  localStorage.setItem('gap_current',JSON.stringify({file_id:FILE_ID,admin:false,t:Date.now()}));
 
   // Fermer le wizard → ouvrir l'app directement
   document.getElementById('wizard').classList.add('hidden');
@@ -1383,7 +1383,15 @@ window.addEventListener('load',function(){
 
   // Session active ? → recharger l'app directement
   var session=null;
-  try{var ss=sessionStorage.getItem('gap_session');if(ss)session=JSON.parse(ss);}catch(e){}
+  try{
+    var ss=localStorage.getItem('gap_current');
+    if(ss){
+      var parsed=JSON.parse(ss);
+      // Session valide si moins de 24h
+      if(parsed&&parsed.file_id&&(Date.now()-parsed.t)<86400000) session=parsed;
+      else localStorage.removeItem('gap_current');
+    }
+  }catch(e){}
   if(session&&session.file_id){
     var fileId=session.file_id;
     // Essayer localStorage d'abord
@@ -1412,14 +1420,14 @@ window.addEventListener('load',function(){
           }catch(e){showPortal();}
         }else{
           // Lycée introuvable → portail
-          sessionStorage.removeItem('gap_session');
+          localStorage.removeItem('gap_current');
           showPortal();
         }
       }).catch(function(){hidePortalLoader();showPortal();});
       return;
     }
     // Ni local ni Firebase → portail
-    sessionStorage.removeItem('gap_session');
+    localStorage.removeItem('gap_current');
     showPortal();
     return;
   }
@@ -1567,7 +1575,7 @@ function openApp(){
   document.getElementById('hero-devise').textContent=CFG.devise?'"'+CFG.devise+'"':'';
 
   // Admin nav — visible seulement si accès admin GAP (depuis ?setup)
-  var isAdminAccess=sessionStorage.getItem('gap_admin_access')==='1';
+  var isAdminAccess=function(){var cur=null;try{var s=localStorage.getItem('gap_current');if(s)cur=JSON.parse(s);}catch(e){}return cur&&cur.admin;}();
   if(isAdminAccess) isAdmin=true;
   document.getElementById('nav-admin').style.display=isAdmin?'block':'none';
 
@@ -3091,7 +3099,7 @@ async function portalLogin(){
       var h=await sha256(pass);
       if(h===lsAccount.pwd_hash){
         err.style.display='none';
-        sessionStorage.setItem('gap_session',JSON.stringify({user:user,file_id:lsAccount.file_id}));
+        localStorage.setItem('gap_current',JSON.stringify({file_id:lsAccount.file_id,admin:false,t:Date.now()}));
         loadLycee(lsAccount.file_id, true);
         return;
       }
@@ -3112,7 +3120,7 @@ async function portalLogin(){
     // Sauvegarder en local pour usage hors-ligne
     localStorage.setItem('gap_account_'+user,JSON.stringify(acc));
     // Session active (persiste jusqu'à fermeture du navigateur)
-    sessionStorage.setItem('gap_session',JSON.stringify({user:user,file_id:acc.file_id}));
+    localStorage.setItem('gap_current',JSON.stringify({file_id:acc.file_id,admin:false,t:Date.now()}));
     loadLycee(acc.file_id, true); // true = accès direct sans re-login
   }).catch(function(e){
     btn.disabled=false;btn.textContent='🔓 Se connecter';
@@ -3191,7 +3199,7 @@ function showSetup(){
   // Afficher setup-page
   document.getElementById('setup-page').style.display='block';
   // Vérifier si déjà authentifié dans cette session
-  if(sessionStorage.getItem('gap_setup_auth')==='1'){
+  if(localStorage.getItem('gap_setup_auth')==='1'){
     showSetupDashboard();
   } else {
     document.getElementById('setup-auth').style.display='flex';
@@ -3213,14 +3221,14 @@ async function setupAuthCheck(){
   if(!stored){
     // Première fois → créer le mot de passe maître
     localStorage.setItem('gap_master_hash',h);
-    sessionStorage.setItem('gap_setup_auth','1');
+    localStorage.setItem('gap_setup_auth','1');
     err.style.display='none';
     showSetupDashboard();
     toast('✅ Mot de passe admin défini !');
     return;
   }
   if(h===stored){
-    sessionStorage.setItem('gap_setup_auth','1');
+    localStorage.setItem('gap_setup_auth','1');
     err.style.display='none';
     showSetupDashboard();
   } else {
@@ -3385,8 +3393,8 @@ async function setupChangeMaster(){
 function setupAccessLycee(fileId){
   if(!fileId){alert('Ce lycée n\'a pas encore été configuré.');return;}
   // Marquer la session comme accès admin GAP
-  sessionStorage.setItem('gap_admin_access','1');
-  sessionStorage.setItem('gap_session',JSON.stringify({file_id:fileId,admin:true}));
+  localStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
+  localStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
   // Cacher la page setup
   document.getElementById('setup-page').style.display='none';
   // Charger le lycée
@@ -3428,7 +3436,7 @@ function newLycee(){showSetup();}
 
 function backToSetup(){
   // Retourner au dashboard setup sans perdre l'auth
-  sessionStorage.removeItem('gap_session');
+  localStorage.removeItem('gap_current');
   isAdmin=false;
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
