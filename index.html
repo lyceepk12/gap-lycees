@@ -1538,8 +1538,9 @@ function openApp(){
   document.getElementById('hero-sub').textContent='GAP — Gestion des Absences des Professeurs — '+(CFG.lycee||'');
   document.getElementById('hero-devise').textContent=CFG.devise?'"'+CFG.devise+'"':'';
 
-  // Admin nav
-  document.getElementById('nav-admin').style.display=isAdmin?'block':'none';
+  // Admin nav — toujours visible (proviseur déjà authentifié via portail)
+  document.getElementById('nav-admin').style.display='block';
+  isAdmin=true;
 
   // Init
   initSelects();
@@ -2874,6 +2875,9 @@ function rAdmin(){
   // Bouton logo dans admin
   var admLogo=document.getElementById('adm-logo-prev');
   if(admLogo){admLogo.innerHTML=logoData?'<img src="'+logoData+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;border:1.5px solid #e2e8f0;"/>':'<div style="width:60px;height:60px;border-radius:8px;background:#f0f7ff;border:2px dashed #c3dafe;display:flex;align-items:center;justify-content:center;font-size:24px;">🏫</div>';}
+  // Logo preview
+  var admLogoPrev=document.getElementById('adm-logo-prev');
+  if(admLogoPrev){admLogoPrev.innerHTML=logoData?'<img src="'+logoData+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;border:1.5px solid #e2e8f0;"/>':'<div style="width:60px;height:60px;border-radius:8px;background:#f0f7ff;border:2px dashed #c3dafe;display:flex;align-items:center;justify-content:center;font-size:24px;">🏫</div>';}
   document.getElementById('adm-lycee').value=CFG.lycee||'';
   document.getElementById('adm-ville').value=CFG.ville||'';
   document.getElementById('adm-prov').value=CFG.proviseur||'';
