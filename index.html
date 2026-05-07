@@ -1543,11 +1543,13 @@ async function loginAdmin(){
 
 function logout(){
   if(unsaved&&!confirm('Des données non sauvegardées seront perdues. Quitter ?'))return;
+  // Effacer la session → empêche le rechargement auto après actualisation
+  localStorage.removeItem('gap_current');
+  localStorage.removeItem('gap_setup_auth');
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
   document.getElementById('ls').style.display='none';
   isAdmin=false;
-  // Revenir à la page de connexion centrale, effacer l'URL
   history.replaceState(null,'',window.location.pathname);
   document.getElementById('portal-user').value='';
   document.getElementById('portal-pass').value='';
