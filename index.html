@@ -515,7 +515,7 @@ table{min-width:520px;}
 <!-- ===== PAGE SETUP ADMIN ===== -->
 <div id="setup-page" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#1a0530 0%,#2d1060 50%,#1a0530 100%);z-index:99997;overflow-y:auto;padding:20px 16px;">
   <!-- Vérification mot de passe maître -->
-  <div id="setup-auth" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+  <div id="setup-auth" style="display:none;align-items:center;justify-content:center;min-height:100vh;">
     <div style="background:#fff;border-radius:20px;width:380px;max-width:96vw;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.5);">
       <div style="text-align:center;margin-bottom:24px;">
         <div style="font-size:44px;margin-bottom:8px;">🛡️</div>
@@ -3146,7 +3146,13 @@ function hidePortalLoader(){
 // ===== PAGE SETUP ADMIN =====
 
 function showSetup(){
+  // Cacher tout le reste
   document.getElementById('portal').style.display='none';
+  document.getElementById('wizard').classList.add('hidden');
+  document.getElementById('ls').style.display='none';
+  document.getElementById('sb').style.display='none';
+  document.getElementById('main').style.display='none';
+  // Afficher setup-page
   document.getElementById('setup-page').style.display='block';
   // Vérifier si déjà authentifié dans cette session
   if(sessionStorage.getItem('gap_setup_auth')==='1'){
