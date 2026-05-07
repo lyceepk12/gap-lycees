@@ -1277,8 +1277,8 @@ async function wzFinish(){
   PWD_MAIN=h1;PWD_DEL=h2;PWD_ADM=h3;
   CFG=Object.assign({},config);CFG.an=WZ.an;
 
-  // Générer un FILE_ID unique pour ce lycée
-  FILE_ID='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
+  // FILE_ID déjà défini par setupCreateAccount — ne pas écraser
+  if(!FILE_ID) FILE_ID='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
   // Mettre à jour les données globales
   DAT.config=config;DAT.an=an;DAT.disc=DISC;DAT.salles=SALLES;
   DAT.profs=profs;DAT.abs=absMap;DAT.cg=cgMap;DAT.cga=cgaMap;
@@ -1291,16 +1291,23 @@ async function wzFinish(){
 
   // Mettre à jour le nom du lycée dans le compte Firebase
   if(fbEnabled&&db&&FILE_ID){
-    db.collection('comptes').where('file_id','==',FILE_ID).get().then(function(snap){
-      snap.forEach(function(d){d.ref.update({lycee:config.lycee||''});});
-    }).catch(function(){});
+    var pendingUser=sessionStorage.getItem('gap_pending_user');
+    if(pendingUser){
+      db.collection('comptes').doc(pendingUser).update({lycee:config.lycee||''})
+        .then(function(){sessionStorage.removeItem('gap_pending_user');})
+        .catch(function(){});
+    }
   }
 
-  // Fermer le wizard, afficher le login proviseur
+  // Session active pour ce lycée
+  sessionStorage.setItem('gap_session',JSON.stringify({file_id:FILE_ID}));
+
+  // Fermer le wizard → ouvrir l'app directement
   document.getElementById('wizard').classList.add('hidden');
   document.getElementById('portal').style.display='none';
-  showLoginScreen();
-  toast('🎉 Configuration terminée ! Connectez-vous.');
+  document.getElementById('ls').style.display='none';
+  openApp();
+  toast('🎉 Configuration terminée ! Bienvenue.');
 }
 
 // ===== DÉMARRAGE =====
@@ -3125,6 +3132,8 @@ async function setupCreateAccount(){
   await db.collection('comptes').doc(user).set({pwd_hash:h,file_id:newFileId,lycee:'',created:new Date().toISOString()});
   // Sauvegarder en local
   localStorage.setItem('gap_account_'+user,JSON.stringify({pwd_hash:h,file_id:newFileId}));
+  // Stocker le username pour mise à jour après config
+  sessionStorage.setItem('gap_pending_user', user);
   // Lancer la configuration pour ce lycée
   FILE_ID=newFileId;
   document.getElementById('setup-page').style.display='none';
