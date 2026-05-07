@@ -512,39 +512,88 @@ table{min-width:520px;}
   </div>
 </div>
 
-<!-- ===== PAGE SETUP (URL ?setup=clé) ===== -->
-<div id="setup-page" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#1a0530 0%,#2d1060 50%,#1a0530 100%);z-index:99997;align-items:center;justify-content:center;overflow-y:auto;padding:20px;">
-  <div style="background:#fff;border-radius:20px;width:500px;max-width:96vw;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.5);">
-    <div style="text-align:center;margin-bottom:22px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border-radius:50px;padding:6px 16px;font-size:11px;font-weight:700;margin-bottom:12px;">⚙️ ADMINISTRATION GAP</div>
-      <h2 style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">Configurer un lycée</h2>
-      <p style="font-size:12px;color:#64748b;">Créez un compte d'accès pour un nouvel établissement</p>
+<!-- ===== PAGE SETUP ADMIN ===== -->
+<div id="setup-page" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#1a0530 0%,#2d1060 50%,#1a0530 100%);z-index:99997;overflow-y:auto;padding:20px 16px;">
+  <!-- Vérification mot de passe maître -->
+  <div id="setup-auth" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <div style="background:#fff;border-radius:20px;width:380px;max-width:96vw;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.5);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:44px;margin-bottom:8px;">🛡️</div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border-radius:50px;padding:5px 14px;font-size:11px;font-weight:700;margin-bottom:12px;">⚙️ ADMINISTRATION GAP</div>
+        <h2 style="font-size:17px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">Accès administrateur</h2>
+        <p id="setup-auth-hint" style="font-size:12px;color:#64748b;">Entrez le mot de passe administrateur.</p>
+      </div>
+      <input type="password" id="setup-master-inp" placeholder="Mot de passe administrateur" onkeydown="if(event.key==='Enter')setupAuthCheck()" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:10px;"/>
+      <div id="setup-auth-err" style="display:none;color:#e74c3c;font-size:12px;text-align:center;margin-bottom:10px;">❌ Mot de passe incorrect</div>
+      <button onclick="setupAuthCheck()" style="width:100%;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🔓 Accéder</button>
+      <div style="text-align:center;"><a href="?" style="font-size:11px;color:#94a3b8;text-decoration:none;">← Retour connexion</a></div>
     </div>
-    <!-- Liste lycées existants -->
-    <div id="setup-list" style="margin-bottom:20px;max-height:200px;overflow-y:auto;"></div>
-    <!-- Formulaire nouveau lycée -->
-    <div style="background:#f8fafc;border-radius:12px;padding:16px;border:1.5px solid #e2e8f0;">
-      <h3 style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:12px;">➕ Nouveau lycée</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+  </div>
+
+  <!-- Dashboard admin (caché jusqu'à auth) -->
+  <div id="setup-dashboard" style="display:none;max-width:700px;margin:0 auto;padding:20px 0 40px;">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:50px;padding:5px 14px;font-size:11px;font-weight:700;color:#fff;margin-bottom:8px;">⚙️ ADMINISTRATION GAP</div>
+        <h1 style="font-size:22px;font-weight:900;color:#fff;margin:0;">Gestion des lycées</h1>
+      </div>
+      <a href="?" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none;">← Déconnexion</a>
+    </div>
+
+    <!-- Stats rapides -->
+    <div id="setup-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;"></div>
+
+    <!-- Onglets -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button onclick="setupTab('list',this)" id="tab-list" style="padding:9px 18px;border-radius:10px;border:none;background:#fff;color:#1a1a2e;font-size:13px;font-weight:700;cursor:pointer;">🏫 Lycées</button>
+      <button onclick="setupTab('new',this)" id="tab-new" style="padding:9px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer;">➕ Nouveau</button>
+      <button onclick="setupTab('settings',this)" id="tab-settings" style="padding:9px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer;">⚙️ Paramètres</button>
+    </div>
+
+    <!-- Onglet Liste lycées -->
+    <div id="setup-tab-list" style="background:#fff;border-radius:16px;padding:20px;">
+      <div id="setup-list" style="min-height:60px;"></div>
+    </div>
+
+    <!-- Onglet Nouveau lycée -->
+    <div id="setup-tab-new" style="display:none;background:#fff;border-radius:16px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:16px;">➕ Créer un compte lycée</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div>
-          <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Identifiant *</label>
-          <input type="text" id="setup-user" placeholder="ex: pk12" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;"/>
+          <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Identifiant *</label>
+          <input type="text" id="setup-user" placeholder="ex: pk12, balbala..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;outline:none;"/>
+          <p style="font-size:10px;color:#94a3b8;margin-top:3px;">Utilisé pour se connecter</p>
         </div>
         <div>
-          <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">Mot de passe *</label>
-          <input type="password" id="setup-pass" placeholder="••••••••" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;"/>
+          <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:5px;">Mot de passe *</label>
+          <input type="password" id="setup-pass" placeholder="••••••••" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;outline:none;"/>
         </div>
       </div>
-      <div id="setup-err" style="display:none;color:#e74c3c;font-size:12px;margin-bottom:8px;"></div>
-      <button onclick="setupCreateAccount()" style="width:100%;background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">✅ Créer le compte — lancer la configuration</button>
+      <div id="setup-err" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px;font-size:12px;color:#dc2626;margin-bottom:12px;"></div>
+      <button onclick="setupCreateAccount()" id="setup-create-btn" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">✅ Créer le compte et lancer la configuration</button>
     </div>
-    <div style="text-align:center;margin-top:14px;">
-      <a href="?" style="font-size:11px;color:#94a3b8;text-decoration:none;">← Retour à la connexion</a>
+
+    <!-- Onglet Paramètres -->
+    <div id="setup-tab-settings" style="display:none;background:#fff;border-radius:16px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:16px;">⚙️ Paramètres administrateur</h3>
+      <div style="margin-bottom:16px;padding:14px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;">
+        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:6px;">Changer le mot de passe admin</label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="setup-new-master" placeholder="Nouveau mot de passe" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;"/>
+          <button onclick="setupChangeMaster()" style="background:linear-gradient(135deg,#1a1a2e,#2980b9);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;">Changer</button>
+        </div>
+      </div>
+      <div style="padding:14px;background:#fef2f2;border-radius:10px;border:1.5px solid #fecaca;">
+        <label style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;display:block;margin-bottom:6px;">⚠️ URL d'accès admin</label>
+        <div id="setup-url-display" style="font-size:12px;color:#1a1a2e;background:#fff;border-radius:6px;padding:8px 10px;font-family:monospace;word-break:break-all;"></div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:6px;">Gardez cette URL secrète. Ne la partagez jamais.</p>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ===== LOGIN PROVISEUR =====<!-- ===== LOGIN PROVISEUR ===== -->
+<!-- ===== LOGIN PROVISEUR <!-- ===== LOGIN PROVISEUR =====<!-- ===== LOGIN PROVISEUR ===== -->
 <div id="ls" style="display:none;">
   <div class="lb">
     <div style="text-align:center;margin-bottom:20px;">
@@ -3094,65 +3143,199 @@ function hidePortalLoader(){
   var el=document.getElementById('portal-loader');if(el)el.style.display='none';
 }
 
-// ===== PAGE SETUP =====
+// ===== PAGE SETUP ADMIN =====
+
 function showSetup(){
   document.getElementById('portal').style.display='none';
-  document.getElementById('setup-page').style.display='flex';
+  document.getElementById('setup-page').style.display='block';
+  // Vérifier si déjà authentifié dans cette session
+  if(sessionStorage.getItem('gap_setup_auth')==='1'){
+    showSetupDashboard();
+  } else {
+    document.getElementById('setup-auth').style.display='flex';
+    document.getElementById('setup-dashboard').style.display='none';
+    // Détecter première utilisation
+    var stored=localStorage.getItem('gap_master_hash');
+    var hint=document.getElementById('setup-auth-hint');
+    if(hint) hint.textContent=stored?'Entrez le mot de passe administrateur.':'Première utilisation — définissez votre mot de passe admin.';
+    setTimeout(function(){var inp=document.getElementById('setup-master-inp');if(inp){inp.value='';inp.focus();}},200);
+  }
+}
+
+async function setupAuthCheck(){
+  var val=document.getElementById('setup-master-inp').value.trim();
+  var err=document.getElementById('setup-auth-err');
+  if(!val)return;
+  var stored=localStorage.getItem('gap_master_hash');
+  var h=await sha256(val);
+  if(!stored){
+    // Première fois → créer le mot de passe maître
+    localStorage.setItem('gap_master_hash',h);
+    sessionStorage.setItem('gap_setup_auth','1');
+    err.style.display='none';
+    showSetupDashboard();
+    toast('✅ Mot de passe admin défini !');
+    return;
+  }
+  if(h===stored){
+    sessionStorage.setItem('gap_setup_auth','1');
+    err.style.display='none';
+    showSetupDashboard();
+  } else {
+    err.style.display='block';
+    document.getElementById('setup-master-inp').value='';
+    document.getElementById('setup-master-inp').focus();
+  }
+}
+
+function showSetupDashboard(){
+  document.getElementById('setup-auth').style.display='none';
+  document.getElementById('setup-dashboard').style.display='block';
+  setupTab('list', document.getElementById('tab-list'));
   renderSetupList();
+  renderSetupStats();
+  // Afficher URL admin
+  var urlEl=document.getElementById('setup-url-display');
+  if(urlEl) urlEl.textContent=window.location.origin+window.location.pathname+'?setup='+SETUP_KEY;
+}
+
+function setupTab(tab, el){
+  ['list','new','settings'].forEach(function(t){
+    var pane=document.getElementById('setup-tab-'+t);
+    var btn=document.getElementById('tab-'+t);
+    if(pane) pane.style.display=t===tab?'block':'none';
+    if(btn){
+      if(t===tab){btn.style.background='#fff';btn.style.color='#1a1a2e';btn.style.border='none';}
+      else{btn.style.background='transparent';btn.style.color='rgba(255,255,255,.7)';btn.style.border='1px solid rgba(255,255,255,.2)';}
+    }
+  });
+}
+
+function renderSetupStats(){
+  var el=document.getElementById('setup-stats');if(!el)return;
+  if(!fbEnabled||!db){el.innerHTML='';return;}
+  db.collection('comptes').get().then(function(snap){
+    var total=snap.size;
+    el.innerHTML=[
+      ['🏫','Lycées',total],
+      ['☁️','Firebase',fbEnabled?'Connecté':'Hors ligne'],
+      ['🔑','Accès','?setup='+SETUP_KEY.substring(0,6)+'...']
+    ].map(function(s){
+      return '<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;text-align:center;">'+
+      '<div style="font-size:24px;margin-bottom:4px;">'+s[0]+'</div>'+
+      '<div style="font-size:18px;font-weight:800;color:#fff;">'+s[1]+'</div>'+
+      '<div style="font-size:11px;color:rgba(255,255,255,.5);">'+s[2]+'</div></div>';
+    }).join('');
+  }).catch(function(){});
 }
 
 function renderSetupList(){
   var el=document.getElementById('setup-list');if(!el)return;
-  if(!fbEnabled||!db){el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;">Firebase requis pour lister les comptes.</p>';return;}
+  if(!fbEnabled||!db){
+    el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;padding:16px;">Firebase requis.</p>';
+    return;
+  }
+  el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;padding:12px;">Chargement...</p>';
   db.collection('comptes').get().then(function(snap){
-    if(snap.empty){el.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;padding:8px;">Aucun lycée configuré.</p>';return;}
-    var rows=snap.docs.map(function(d){
+    if(snap.empty){
+      el.innerHTML='<div style="text-align:center;padding:24px;color:#94a3b8;"><div style="font-size:36px;margin-bottom:8px;">🏫</div><p style="font-size:13px;">Aucun lycée configuré.</p></div>';
+      return;
+    }
+    el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:13px;">'+
+    '<thead><tr style="background:#f8fafc;">'+
+    '<th style="padding:10px 12px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;">Identifiant</th>'+
+    '<th style="padding:10px 12px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;">Lycée</th>'+
+    '<th style="padding:10px 12px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;">Créé le</th>'+
+    '<th style="padding:10px 12px;text-align:center;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;">Actions</th>'+
+    '</tr></thead><tbody>'+
+    snap.docs.map(function(d){
       var acc=d.data();
-      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;">'+
-        '<div><span style="font-weight:700;font-size:13px;">'+d.id+'</span>'+
-        '<span style="font-size:11px;color:#64748b;margin-left:8px;">'+(acc.lycee||'')+'</span></div>'+
-        '<button onclick="setupDelAccount(this.dataset.u)" data-u="'+d.id+'" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">🗑</button>'+
-        '</div>';
-    }).join('');
-    el.innerHTML='<div style="margin-bottom:10px;"><p style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;">COMPTES EXISTANTS</p>'+rows+'</div>';
-  }).catch(function(){});
+      var date=acc.created?new Date(acc.created).toLocaleDateString('fr-FR'):'—';
+      return '<tr style="border-bottom:1px solid #f1f5f9;">'+
+        '<td style="padding:10px 12px;"><span style="background:#dbeafe;color:#1e40af;border-radius:6px;padding:3px 8px;font-weight:700;font-size:12px;">'+d.id+'</span></td>'+
+        '<td style="padding:10px 12px;font-weight:600;color:#1a1a2e;">'+(acc.lycee||'<span style="color:#94a3b8;font-style:italic;">Non configuré</span>')+'</td>'+
+        '<td style="padding:10px 12px;color:#64748b;font-size:12px;">'+date+'</td>'+
+        '<td style="padding:10px 12px;text-align:center;display:flex;gap:6px;justify-content:center;">'+
+        '<button onclick="setupResetPass(this.dataset.u)" data-u="'+d.id+'" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">🔑 MDP</button>'+
+        '<button onclick="setupDelAccount(this.dataset.u)" data-u="'+d.id+'" style="background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">🗑 Suppr.</button>'+
+        '</td></tr>';
+    }).join('')+
+    '</tbody></table>';
+  }).catch(function(){
+    el.innerHTML='<p style="color:#e74c3c;font-size:12px;text-align:center;padding:12px;">Erreur de chargement.</p>';
+  });
 }
 
 async function setupCreateAccount(){
   var user=document.getElementById('setup-user').value.trim().toLowerCase();
   var pass=document.getElementById('setup-pass').value;
   var err=document.getElementById('setup-err');
+  var btn=document.getElementById('setup-create-btn');
+  err.style.display='none';
   if(!user||!pass){err.textContent='Identifiant et mot de passe requis.';err.style.display='block';return;}
+  if(user.length<2){err.textContent='Identifiant trop court (min 2 caractères).';err.style.display='block';return;}
+  if(pass.length<4){err.textContent='Mot de passe trop court (min 4 caractères).';err.style.display='block';return;}
   if(!fbEnabled||!db){err.textContent='Firebase requis.';err.style.display='block';return;}
-  // Vérifier si compte existe déjà
-  var doc=await db.collection('comptes').doc(user).get();
-  if(doc.exists){err.textContent='Cet identifiant existe déjà.';err.style.display='block';return;}
-  var h=await sha256(pass);
-  var newFileId='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
-  await db.collection('comptes').doc(user).set({pwd_hash:h,file_id:newFileId,lycee:'',created:new Date().toISOString()});
-  // Sauvegarder en local
-  localStorage.setItem('gap_account_'+user,JSON.stringify({pwd_hash:h,file_id:newFileId}));
-  // Stocker le username pour mise à jour après config
-  sessionStorage.setItem('gap_pending_user', user);
-  // Lancer la configuration pour ce lycée
-  FILE_ID=newFileId;
-  document.getElementById('setup-page').style.display='none';
-  // Lancer wizard
-  wzDiscs=[];wzSalles=[];wzProfs=[];
-  ['w-lycee','w-ville','w-devise','w-email','w-prov','w-pwd1','w-pwd1c','w-pwd2','w-pwd3'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.value='';});
-  document.getElementById('w-pays').value='République de Djibouti';
-  document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
-  wzRenderDiscs();wzRenderProfs();wzPreviewSalles();wzSetStep(1);
-  document.getElementById('wizard').classList.remove('hidden');
-  toast('✅ Compte "'+user+'" créé ! Configurez maintenant le lycée.');
+  btn.disabled=true;btn.textContent='Création en cours...';
+  try{
+    var doc=await db.collection('comptes').doc(user).get();
+    if(doc.exists){err.textContent='Cet identifiant existe déjà.';err.style.display='block';btn.disabled=false;btn.textContent='✅ Créer le compte et lancer la configuration';return;}
+    var h=await sha256(pass);
+    var newFileId='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
+    await db.collection('comptes').doc(user).set({pwd_hash:h,file_id:newFileId,lycee:'',created:new Date().toISOString()});
+    localStorage.setItem('gap_account_'+user,JSON.stringify({pwd_hash:h,file_id:newFileId}));
+    sessionStorage.setItem('gap_pending_user',user);
+    FILE_ID=newFileId;
+    document.getElementById('setup-page').style.display='none';
+    // Réinitialiser wizard
+    wzDiscs=[];wzSalles=[];wzProfs=[];
+    ['w-lycee','w-ville','w-devise','w-email','w-prov','w-pwd1','w-pwd1c','w-pwd2','w-pwd3'].forEach(function(id){var el2=document.getElementById(id);if(el2)el2.value='';});
+    document.getElementById('w-pays').value='République de Djibouti';
+    document.getElementById('w-titre').value='Proviseur Adjoint chargé des Enseignants';
+    wzRenderDiscs();wzRenderProfs();wzPreviewSalles();wzSetStep(1);
+    document.getElementById('wizard').classList.remove('hidden');
+    toast('✅ Compte "'+user+'" créé ! Configurez le lycée.');
+  }catch(e){
+    btn.disabled=false;btn.textContent='✅ Créer le compte et lancer la configuration';
+    err.textContent='Erreur : '+e.message;err.style.display='block';
+  }
+}
+
+function setupResetPass(user){
+  var newPass=prompt('Nouveau mot de passe pour "'+user+'" :','');
+  if(!newPass||newPass.length<4){if(newPass!==null)alert('Mot de passe trop court.');return;}
+  sha256(newPass).then(function(h){
+    db.collection('comptes').doc(user).update({pwd_hash:h}).then(function(){
+      // Mettre à jour localStorage si présent
+      var ls=localStorage.getItem('gap_account_'+user);
+      if(ls){try{var d=JSON.parse(ls);d.pwd_hash=h;localStorage.setItem('gap_account_'+user,JSON.stringify(d));}catch(e){}}
+      toast('✅ Mot de passe de "'+user+'" mis à jour !');
+    }).catch(function(){toast('❌ Erreur mise à jour.');});
+  });
 }
 
 function setupDelAccount(user){
-  if(!confirm('Supprimer le compte "'+user+'" ?'))return;
-  db.collection('comptes').doc(user).delete().then(function(){
+  if(!confirm('Supprimer le compte "'+user+'" et toutes ses données ?\nCette action est irréversible.'))return;
+  var fileId=null;
+  db.collection('comptes').doc(user).get().then(function(doc){
+    if(doc.exists)fileId=doc.data().file_id;
+    return db.collection('comptes').doc(user).delete();
+  }).then(function(){
+    if(fileId)db.collection('lycees').doc(fileId).delete().catch(function(){});
     localStorage.removeItem('gap_account_'+user);
-    renderSetupList();toast('Compte supprimé.');
-  });
+    if(fileId)localStorage.removeItem('gap_data_'+fileId);
+    renderSetupList();renderSetupStats();
+    toast('🗑 Compte "'+user+'" supprimé.');
+  }).catch(function(){toast('❌ Erreur suppression.');});
+}
+
+async function setupChangeMaster(){
+  var val=document.getElementById('setup-new-master').value.trim();
+  if(!val||val.length<4){alert('Minimum 4 caractères.');return;}
+  var h=await sha256(val);
+  localStorage.setItem('gap_master_hash',h);
+  document.getElementById('setup-new-master').value='';
+  toast('✅ Mot de passe admin changé !');
 }
 
 function bgSyncFirebase(fileId){
