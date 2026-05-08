@@ -1341,10 +1341,10 @@ async function wzFinish(){
 
   // Mettre à jour le nom du lycée dans le compte Firebase
   if(fbEnabled&&db&&FILE_ID){
-    var pendingUser=sessionStorage.getItem('gap_pending_user');
+    var pendingUser=localStorage.getItem('gap_pending_user');
     if(pendingUser){
       db.collection('comptes').doc(pendingUser).update({lycee:config.lycee||''})
-        .then(function(){sessionStorage.removeItem('gap_pending_user');})
+        .then(function(){localStorage.removeItem('gap_pending_user');})
         .catch(function(){});
     }
   }
@@ -1370,111 +1370,81 @@ window.addEventListener('load',function(){
     }
   }catch(e){console.warn('Firebase:',e);}
 
-  // 2. Lire paramètres URL
+  // 2. Paramètres URL
   var urlParams=new URLSearchParams(window.location.search);
-  var lyceeParam=urlParams.get('lycee');
-
-  // ?setup=KEY → page de configuration admin
   var setupKey=urlParams.get('setup');
+
+  // ?setup=KEY → admin
   if(setupKey){
-    if(setupKey===SETUP_KEY){showSetup();return;}
-    else{showPortal();return;}
+    if(setupKey===SETUP_KEY){showSetup();}
+    else{showPortal();}
+    return;
   }
 
-  // Session active ? → recharger l'app directement
+  // 3. Session active dans localStorage ?
   var session=null;
   try{
     var ss=localStorage.getItem('gap_current');
     if(ss){
       var parsed=JSON.parse(ss);
-      // Session valide si moins de 24h
       if(parsed&&parsed.file_id&&(Date.now()-parsed.t)<86400000) session=parsed;
       else localStorage.removeItem('gap_current');
     }
   }catch(e){}
+
   if(session&&session.file_id){
-    var fileId=session.file_id;
-    // Essayer localStorage d'abord
-    var lsData=null;
-    try{var s2=localStorage.getItem('gap_data_'+fileId);if(s2)lsData=JSON.parse(s2);}catch(e){}
-    if(lsData&&lsData.config&&lsData.pwd_main){
-      loadFromObj(lsData);
-      if(session.admin)isAdmin=true;
-      document.getElementById('portal').style.display='none';
-      openApp();
-      if(fbEnabled&&db)bgSyncFirebase(fileId);
-      return;
-    }
-    // Pas de localStorage → charger depuis Firebase (retour d'un autre appareil)
-    if(fbEnabled&&db){
-      showPortalLoader('☁️ Restauration de la session...');
-      db.collection('lycees').doc(fileId).get().then(function(doc){
-        hidePortalLoader();
-        if(doc.exists){
-          try{
-            var fd=JSON.parse(doc.data().payload);
-            loadFromObj(fd);autoSaveLocal();
-            if(session.admin)isAdmin=true;
-            document.getElementById('portal').style.display='none';
-            openApp();
-          }catch(e){showPortal();}
-        }else{
-          // Lycée introuvable → portail
-          localStorage.removeItem('gap_current');
-          showPortal();
-        }
-      }).catch(function(){hidePortalLoader();showPortal();});
-      return;
-    }
-    // Ni local ni Firebase → portail
-    localStorage.removeItem('gap_current');
-    showPortal();
+    // Session trouvée → charger depuis Firebase
+    chargerDepuisFirebase(session.file_id, session.admin||false);
     return;
   }
 
-  // 3. Avec paramètre URL → charger ce lycée
-  if(lyceeParam){
-    // Chercher dans localStorage d'abord (marche hors-ligne)
-    var lsData=null;
-    try{
-      var s=localStorage.getItem('gap_data_'+lyceeParam);
-      if(s)lsData=JSON.parse(s);
-    }catch(e){}
-
-    if(lsData&&lsData.config&&lsData.pwd_main){
-      // Données locales OK → afficher login proviseur (accès direct par URL)
-      loadFromObj(lsData);
-      document.getElementById('wizard').style.display='none';
-      document.getElementById('portal').style.display='none';
-      showLoginScreen();
-      if(fbEnabled&&db)bgSyncFirebase(lyceeParam);
-      return;
-    }
-
-    // Pas en local → charger depuis Firebase
-    if(fbEnabled&&db){
-      showPortalLoader('☁️ Chargement...');
-      db.collection('lycees').doc(lyceeParam).get().then(function(doc){
-        hidePortalLoader();
-        if(doc.exists){
-          try{
-            var fd=JSON.parse(doc.data().payload);
-            loadFromObj(fd);autoSaveLocal();
-            document.getElementById('wizard').style.display='none';
-            document.getElementById('portal').style.display='none';
-            showLoginScreen();
-          }catch(e){showPortal();}
-        }else{showPortal();}
-      }).catch(function(){hidePortalLoader();showPortal();});
-      return;
-    }
-    showPortal();
-    return;
-  }
-
-  // Sans paramètre URL → page de connexion centrale
+  // 4. Aucune session → portail de connexion
   showPortal();
 });
+
+// Charger un lycée depuis Firebase et ouvrir l'app
+function chargerDepuisFirebase(fileId, admin){
+  if(!fbEnabled||!db){
+    // Hors ligne : essayer localStorage
+    var lsData=null;
+    try{var s=localStorage.getItem('gap_data_'+fileId);if(s)lsData=JSON.parse(s);}catch(e){}
+    if(lsData&&lsData.config){
+      loadFromObj(lsData);
+      if(admin)isAdmin=true;
+      openApp();
+    } else {
+      localStorage.removeItem('gap_current');
+      showPortal();
+    }
+    return;
+  }
+  showPortalLoader('☁️ Chargement...');
+  db.collection('lycees').doc(fileId).get().then(function(doc){
+    hidePortalLoader();
+    if(doc.exists){
+      try{
+        var fd=JSON.parse(doc.data().payload);
+        loadFromObj(fd);
+        if(admin)isAdmin=true;
+        openApp();
+      }catch(e){localStorage.removeItem('gap_current');showPortal();}
+    }else{
+      localStorage.removeItem('gap_current');
+      showPortal();
+    }
+  }).catch(function(e){
+    hidePortalLoader();
+    console.warn('Firebase load:',e);
+    // Fallback localStorage hors ligne
+    var lsData=null;
+    try{var s=localStorage.getItem('gap_data_'+fileId);if(s)lsData=JSON.parse(s);}catch(e2){}
+    if(lsData&&lsData.config){
+      loadFromObj(lsData);if(admin)isAdmin=true;openApp();
+    } else {
+      showPortal();
+    }
+  });
+}
 
 function loadFromObj(d){
   if(d.config)CFG=Object.assign({},d.config);
@@ -1717,11 +1687,16 @@ function getStorageKey(){
 
 function autoSaveLocal(){
   var data=buildSaveObj();
-  localStorage.setItem(getStorageKey(),JSON.stringify(data));
-  var si=document.getElementById('si');
-  if(si)si.textContent='💾 '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   unsaved=false;
-  if(fbEnabled&&db&&FILE_ID) saveToFirebase(data);
+  // Version en ligne : sauvegarder uniquement dans Firebase
+  if(fbEnabled&&db&&FILE_ID){
+    saveToFirebase(data);
+  } else {
+    // Hors ligne : fallback localStorage
+    try{localStorage.setItem(getStorageKey(),JSON.stringify(data));}catch(e){}
+    var si=document.getElementById('si');
+    if(si)si.textContent='💾 Local '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }
 }
 
 function saveToFirebase(data){
@@ -1749,30 +1724,9 @@ function saveToFirebase(data){
   });
 }
 
-function loadFromFirebase(fileId,callback){
-  if(!fbEnabled||!db){callback(null);return;}
-  db.collection('lycees').doc(fileId).get().then(function(doc){
-    if(doc.exists){
-      try{callback(JSON.parse(doc.data().payload));}
-      catch(e){callback(null);}
-    }else{callback(null);}
-  }).catch(function(e){console.warn('Firebase load:',e);callback(null);});
-}
+// loadFromFirebase supprimé — utiliser chargerDepuisFirebase
 
-function syncFromCloud(){
-  if(!FILE_ID){toast('⚠️ Configurez d\'abord le lycée.');return;}
-  if(!fbEnabled||!db){toast('⚠️ Firebase non disponible.');return;}
-  toast('☁️ Chargement depuis le cloud...');
-  loadFromFirebase(FILE_ID,function(d){
-    if(d){
-      loadFromObj(d);
-      initSelects();rAccueil();rProfs();rAbs();rConges();updBadge();
-      toast('✅ Données rechargées depuis le cloud !');
-    }else{
-      toast('ℹ️ Aucune donnée cloud pour ce lycée.');
-    }
-  });
-}
+// syncFromCloud supprimé — données toujours depuis Firebase
 
 function buildSaveObj(){
   return{file_id:FILE_ID,config:CFG,an:an,disc:DISC,salles:SALLES,profs:profs,abs:absMap,cg:cgMap,cga:cgaMap,edt:edtMap,photos:photos,al:alLues,nid:nid,pwd_main:PWD_MAIN,pwd_del:PWD_DEL,pwd_adm:PWD_ADM,theme:currentTheme,logo:logoData};
@@ -3131,51 +3085,10 @@ async function portalLogin(){
   });
 }
 
-function loadLycee(fileId, skipLogin){
-  // skipLogin=true → vient de portalLogin() → openApp() direct sans page login proviseur
-  showPortalLoader('☁️ Chargement de votre espace...');
-  // 1. Chercher en local d'abord (marche hors-ligne)
-  var lsData=null;
-  try{var s=localStorage.getItem('gap_data_'+fileId);if(s)lsData=JSON.parse(s);}catch(e){}
-  if(lsData&&lsData.config&&lsData.pwd_main){
-    hidePortalLoader();
-    loadFromObj(lsData);
-    document.getElementById('portal').style.display='none';
-    if(skipLogin){
-      // Connexion via portail → accès direct à l'app
-      openApp();
-    }else{
-      // Accès via URL directe → demander le mot de passe proviseur
-      showLoginScreen();
-    }
-    if(fbEnabled&&db)bgSyncFirebase(fileId);
-    return;
-  }
-  // 2. Pas de données locales → charger depuis Firebase
-  if(fbEnabled&&db){
-    db.collection('lycees').doc(fileId).get().then(function(doc){
-      hidePortalLoader();
-      if(doc.exists){
-        try{
-          var fd=JSON.parse(doc.data().payload);
-          loadFromObj(fd);
-          autoSaveLocal();
-          document.getElementById('portal').style.display='none';
-          if(skipLogin){openApp();}else{showLoginScreen();}
-        }catch(e){showPortalErr('Erreur de lecture des données.');}
-      }else{
-        showPortalErr('Espace lycée introuvable. Contactez l’administrateur.');
-      }
-    }).catch(function(){
-      hidePortalLoader();
-      showPortalErr('Erreur réseau. Vérifiez votre connexion.');
-    });
-  }else{
-    hidePortalLoader();
-    showPortalErr('Connexion internet requise pour le premier chargement.');
-  }
+function loadLycee(fileId){
+  document.getElementById('portal').style.display='none';
+  chargerDepuisFirebase(fileId, false);
 }
-
 function showPortalErr(msg){
   var err=document.getElementById('portal-err');
   if(err){err.textContent=msg;err.style.display='block';}
@@ -3338,7 +3251,7 @@ async function setupCreateAccount(){
     var newFileId='gap_'+Date.now()+'_'+Math.random().toString(36).substr(2,8);
     await db.collection('comptes').doc(user).set({pwd_hash:h,file_id:newFileId,lycee:'',created:new Date().toISOString()});
     localStorage.setItem('gap_account_'+user,JSON.stringify({pwd_hash:h,file_id:newFileId}));
-    sessionStorage.setItem('gap_pending_user',user);
+    localStorage.setItem('gap_pending_user',user);
     FILE_ID=newFileId;
     document.getElementById('setup-page').style.display='none';
     // Réinitialiser wizard
@@ -3427,12 +3340,7 @@ function setupAccessLycee(fileId){
   }
 }
 
-function bgSyncFirebase(fileId){
-  if(!fbEnabled||!db)return;
-  db.collection('lycees').doc(fileId).get().then(function(doc){
-    if(doc.exists){try{var fd=JSON.parse(doc.data().payload);if(fd&&fd.file_id===fileId){loadFromObj(fd);autoSaveLocal();}}catch(e){}}
-  }).catch(function(){});
-}
+function bgSyncFirebase(fileId){} // Obsolète — Firebase chargé au démarrage
 
 function newLycee(){showSetup();}
 
