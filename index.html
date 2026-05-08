@@ -122,7 +122,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#eef2f7;color:#1a1a2e;}
 #an-sel option{background:#1e2744;}
 nav{flex:1;padding:10px 10px;overflow-y:auto;}
 .ni{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:all .18s;font-size:13px;color:rgba(255,255,255,.55);border-radius:10px;margin-bottom:2px;}
-.ni:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);}
+.ni:hover,.ni:active{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);}
+.ni{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .ni.active{background:linear-gradient(135deg,rgba(41,128,185,.3),rgba(39,174,96,.2));color:#fff;border:1px solid rgba(41,128,185,.25);}
 .ni .ic{font-size:15px;width:22px;text-align:center;}
 .nb{background:#e74c3c;color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:auto;}
@@ -171,7 +172,8 @@ tr:hover td{background:#f8faff;}
 .fgr select:focus,.fgr input:focus,.fgr textarea:focus{border-color:#2980b9;background:#fff;box-shadow:0 0 0 3px rgba(41,128,185,.1);}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:none;cursor:pointer;font-size:12.5px;font-weight:600;transition:all .18s;}
 .btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
-.btn:active{transform:translateY(0);}
+.btn:active{transform:scale(.97);filter:brightness(.95);}
+.btn{-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .bt{background:linear-gradient(135deg,#2980b9,#1a6b8a);color:#fff;}
 .bp{background:linear-gradient(135deg,#1a1a2e,#2c3e7a);color:#fff;}
 .bg2{background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;}
@@ -234,10 +236,115 @@ tr:hover td{background:#f8faff;}
 .dyn-field{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
 .dyn-field input{flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;}
 .dyn-field input:first-child{max-width:140px;font-weight:700;color:#64748b;}
-@media(max-width:900px){#sb{width:60px;}.bn,.bs,.bsl,#an-box,#sb-ft,#sb-brand .bs,.sbs span{display:none;}.ni{padding:12px;justify-content:center;}.ni .ic{width:auto;}#main{margin-left:60px;}.sg{grid-template-columns:1fr 1fr;}.cg2{grid-template-columns:1fr;}}
-@media(max-width:600px){.sg{grid-template-columns:1fr;}.fg{grid-template-columns:1fr;}.fg3{grid-template-columns:1fr;}.mb{width:95vw;padding:18px;}.wz-box{border-radius:0;}.wz-body{padding:20px 18px;}.wz-header{padding:24px 20px 20px;}.wz-row{grid-template-columns:1fr;}}
 .card{overflow-x:auto;}
 table{min-width:520px;}
+
+/* ===== RESPONSIVE TABLETTE (< 900px) ===== */
+@media(max-width:900px){
+  #sb{width:64px;}
+  .bn,.bs,.bsl,#an-box,#sb-ft,#sb-brand .bs,.sbs span,#sb-admin-back span{display:none;}
+  #sb-brand{padding:10px 8px;}
+  .sb-logo-icon,.logo-circle-sm{margin:0 auto;}
+  .ni{padding:11px;justify-content:center;gap:0;}
+  .ni .ic{width:auto;font-size:18px;}
+  #main{margin-left:64px;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .cg2{grid-template-columns:1fr;}
+  #ct{padding:14px;}
+  .hero{padding:18px;}
+  .tg{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));}
+}
+
+/* ===== RESPONSIVE MOBILE (< 600px) ===== */
+@media(max-width:600px){
+  /* Sidebar → barre du bas */
+  #sb{
+    width:100% !important;
+    height:56px;
+    top:auto;
+    bottom:0;
+    left:0;
+    flex-direction:row;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:0;
+    box-shadow:0 -2px 12px rgba(0,0,0,.2);
+  }
+  #sb-brand,#an-box,#sb-bot,#sb-ft{display:none !important;}
+  nav{
+    display:flex;
+    flex-direction:row;
+    overflow-x:auto;
+    padding:0 4px;
+    align-items:center;
+    flex:1;
+    scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none;}
+  .ni{
+    flex-direction:column;
+    padding:6px 10px;
+    gap:2px;
+    min-width:52px;
+    font-size:9px;
+    border-radius:8px;
+    margin:4px 2px;
+    white-space:nowrap;
+  }
+  .ni .ic{font-size:18px;width:auto;}
+  .nb{font-size:9px;padding:1px 4px;position:absolute;top:3px;right:3px;}
+  #main{
+    margin-left:0 !important;
+    margin-bottom:56px;
+  }
+  #topbar{padding:10px 14px;}
+  #topbar h1{font-size:11px;}
+  #ct{padding:10px;}
+  /* Cards */
+  .sg{grid-template-columns:1fr 1fr;}
+  .cg2{grid-template-columns:1fr;}
+  .fg{grid-template-columns:1fr;}
+  .fg3{grid-template-columns:1fr;}
+  .fr-row{flex-direction:column;}
+  /* Hero */
+  .hero{padding:16px;flex-direction:column;gap:12px;}
+  .hr2{text-align:left;}
+  .bn2{font-size:32px;}
+  /* Modals */
+  .mb{width:100vw !important;max-height:92vh;border-radius:18px 18px 0 0;position:fixed;bottom:0;left:0;margin:0;}
+  .mo{align-items:flex-end;}
+  /* Tables */
+  table{min-width:480px;font-size:11px;}
+  th,td{padding:7px 8px;}
+  /* Wizard */
+  .wz-box{border-radius:0;width:100vw;min-height:100vh;}
+  .wz-body{padding:18px 16px;}
+  .wz-header{padding:22px 18px 18px;}
+  .wz-row{grid-template-columns:1fr;}
+  /* Trombinoscope */
+  .tg{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;}
+  .ta{width:56px;height:56px;}
+  .tn{font-size:8px;}
+  /* Login */
+  .lb{padding:32px 22px 28px;width:100vw;border-radius:0;min-height:100vh;}
+  /* Portal */
+  #portal{padding:20px 12px;}
+  /* Badges */
+  .btn{padding:7px 11px;font-size:11px;}
+  .bsm{padding:4px 8px;font-size:10px;}
+  /* Stats cards */
+  .sc h3{font-size:18px;}
+  .sc p{font-size:10px;}
+  /* Setup page */
+  #setup-dashboard{padding:12px 0 70px;}
+}
+
+/* ===== TRÈS PETIT MOBILE (< 380px) ===== */
+@media(max-width:380px){
+  .sg{grid-template-columns:1fr;}
+  .ni{min-width:44px;padding:5px 7px;}
+  #ct{padding:8px;}
+}
 #toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#1a1a2e,#2c3e7a);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);display:none;z-index:9997;}
 #notif{position:fixed;top:16px;right:16px;background:#fff;border-left:4px solid #2980b9;padding:14px 18px;border-radius:12px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:8888;max-width:320px;display:none;}
 </style>
@@ -479,7 +586,7 @@ table{min-width:520px;}
 </div>
 
 <!-- ===== PAGE CONNEXION UNIQUE ===== -->
-<div id="portal" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);z-index:99998;align-items:center;justify-content:center;">
+<div id="portal" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29 0%,#302b63 50%,#24243e 100%);z-index:99998;align-items:center;justify-content:center;overflow-y:auto;padding:16px;">
   <div style="background:#fff;border-radius:24px;width:420px;max-width:94vw;box-shadow:0 40px 100px rgba(0,0,0,.5);overflow:hidden;">
     <!-- En-tête -->
     <div style="background:linear-gradient(135deg,#1a1a2e,#2c3e7a,#2980b9);padding:32px 36px 28px;text-align:center;">
@@ -1088,6 +1195,7 @@ var fbEnabled=false;
 var fbSyncing=false;
 var MASTER_PWD=null; // Hash du mot de passe maître (admin plateforme)
 var MASTER_KEY='gap_master_pwd'; // Clé localStorage
+// Règle Firestore à ajouter: match /logos/{id} { allow read, write: if true; }
 var FB_CFG={
   apiKey:"AIzaSyBAVz383i1TdYVIZrdc1zrCoUnUi1lhHek",
   authDomain:"gap-lycees.firebaseapp.com",
@@ -1426,7 +1534,11 @@ function chargerDepuisFirebase(fileId, admin){
         var fd=JSON.parse(doc.data().payload);
         loadFromObj(fd);
         if(admin)isAdmin=true;
-        openApp();
+        // Charger le logo depuis logos/FILE_ID
+        loadLogoFromFirebase(fileId,function(logo){
+          if(logo){logoData=logo;updateLogoUI();}
+          openApp();
+        });
       }catch(e){localStorage.removeItem('gap_current');showPortal();}
     }else{
       localStorage.removeItem('gap_current');
@@ -1704,7 +1816,7 @@ function saveToFirebase(data){
   fbSyncing=true;
   var si=document.getElementById('si');
   if(si)si.textContent='☁️ Sync...';
-  // Exclure photos/logo (trop volumineux pour Firestore)
+  // Exclure photos et logo du payload principal (trop volumineux)
   var ph=data.photos, lg=data.logo;
   data.photos={};data.logo=null;
   db.collection('lycees').doc(FILE_ID).set({
@@ -1713,15 +1825,48 @@ function saveToFirebase(data){
   }).then(function(){
     data.photos=ph;data.logo=lg;
     fbSyncing=false;
-    if(si)si.textContent='☁️ Cloud ✅ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(si)si.textContent='☁️ ✅ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     var saut=document.getElementById('si-auto');
     if(saut)saut.innerHTML='<span id="fb-dot" style="width:7px;height:7px;border-radius:50%;background:#27ae60;display:inline-block;margin-right:4px;"></span>Cloud synchronisé';
+    // Sauvegarder le logo dans un document séparé
+    if(lg)saveLogoToFirebase(lg);
   }).catch(function(e){
     data.photos=ph;data.logo=lg;
     fbSyncing=false;
     console.warn('Firebase save error:',e);
-    if(si)si.textContent='💾 Local seulement';
+    if(si)si.textContent='⚠️ Erreur sync';
   });
+}
+
+function saveLogoToFirebase(logoBase64){
+  if(!fbEnabled||!db||!FILE_ID||!logoBase64)return;
+  // Découper le logo en chunks si > 500KB
+  var MAX=500000;
+  if(logoBase64.length>MAX){
+    // Compresser davantage
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement('canvas');
+      var ratio=Math.min(150/img.naturalWidth,150/img.naturalHeight,1);
+      c.width=Math.round(img.naturalWidth*ratio);
+      c.height=Math.round(img.naturalHeight*ratio);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      var compressed=c.toDataURL('image/jpeg',0.7);
+      db.collection('logos').doc(FILE_ID).set({logo:compressed,updated:new Date().toISOString()})
+        .catch(function(e){console.warn('Logo save:',e);});
+    };
+    img.src=logoBase64;
+  } else {
+    db.collection('logos').doc(FILE_ID).set({logo:logoBase64,updated:new Date().toISOString()})
+      .catch(function(e){console.warn('Logo save:',e);});
+  }
+}
+
+function loadLogoFromFirebase(fileId,callback){
+  if(!fbEnabled||!db){callback(null);return;}
+  db.collection('logos').doc(fileId).get().then(function(doc){
+    callback(doc.exists?doc.data().logo:null);
+  }).catch(function(){callback(null);});
 }
 
 // loadFromFirebase supprimé — utiliser chargerDepuisFirebase
@@ -1734,6 +1879,8 @@ function buildSaveObj(){
 
 // ===== LOGO =====
 function impLogo(){
+  // Vérifier que c'est bien l'admin qui modifie
+  if(!isAdmin){toast('⚠️ Seul l\'administrateur peut modifier le logo.');return;}
   var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=function(e){
     var f=e.target.files[0];if(!f)return;
@@ -1742,12 +1889,15 @@ function impLogo(){
       var img=new Image();
       img.onload=function(){
         var c=document.createElement('canvas');
+        // Logo max 200px
         var MAX=200;var ratio=Math.min(MAX/img.naturalWidth,MAX/img.naturalHeight,1);
         c.width=Math.round(img.naturalWidth*ratio);c.height=Math.round(img.naturalHeight*ratio);
         var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);
-        logoData=c.toDataURL('image/jpeg',0.9);
+        logoData=c.toDataURL('image/jpeg',0.85);
         updateLogoUI();
-        unsaved=true;autoSaveLocal();toast('✅ Logo importé !');
+        // Sauvegarder dans Firebase immédiatement
+        saveLogoToFirebase(logoData);
+        toast('✅ Logo importé et synchronisé !');
       };img.src=ev.target.result;
     };r.readAsDataURL(f);
   };inp.click();
@@ -1767,12 +1917,14 @@ function updateLogoUI(){
 }
 
 function supprimerLogo(){
+  if(!isAdmin){toast('⚠️ Seul l\'administrateur peut modifier le logo.');return;}
   logoData=null;
-  var lbLogo=document.getElementById('lb-logo');
-  if(lbLogo)lbLogo.innerHTML='<span id="lb-logo-txt">GAP</span>';
-  var sbLogo=document.getElementById('sb-logo-el');
-  if(sbLogo)sbLogo.innerHTML='<span id="sb-logo-txt" style="font-size:13px;font-weight:900;color:#fff;">G</span>';
-  unsaved=true;autoSaveLocal();toast('Logo supprimé.');
+  updateLogoUI();
+  // Supprimer dans Firebase
+  if(fbEnabled&&db&&FILE_ID){
+    db.collection('logos').doc(FILE_ID).delete().catch(function(){});
+  }
+  toast('🗑 Logo supprimé.');
 }
 
 function save(){
