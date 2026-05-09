@@ -346,6 +346,7 @@ table{min-width:520px;}
   #ct{padding:8px;}
 }
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 #toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#1a1a2e,#2c3e7a);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);display:none;z-index:9997;}
 #notif{position:fixed;top:16px;right:16px;background:#fff;border-left:4px solid #2980b9;padding:14px 18px;border-radius:12px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:8888;max-width:320px;display:none;}
 </style>
@@ -778,8 +779,8 @@ table{min-width:520px;}
     <button class="sbb sbl2" onclick="logout()">🚪 Déconnexion</button>
     <div id="si" title="État de sauvegarde">—</div>
     <div id="si-auto" style="display:flex;align-items:center;gap:4px;justify-content:center;font-size:9px;color:rgba(39,174,96,.7);padding-bottom:2px;">
-      <span id="fb-dot" style="width:7px;height:7px;border-radius:50%;background:#e74c3c;display:inline-block;"></span>
-      <span id="fb-status">Vérification cloud...</span>
+      <span id="fb-dot" style="width:7px;height:7px;border-radius:50%;background:#e74c3c;display:inline-block;animation:pulse 2s infinite;"></span>
+      <span id="fb-status">Connexion...</span>
     </div>
   </div>
   <div id="sb-ft">Conçu avec ♥️ par Neiman Galab</div>
@@ -1194,6 +1195,8 @@ var FILE_ID=DAT.file_id||null;
 var db=null;
 var fbEnabled=false;
 var fbSyncing=false;
+var fbListener=null;   // Listener temps réel onSnapshot
+var fbLastSave=0;      // Timestamp dernière sauvegarde locale (évite boucle)
 var fbListener=null; // Listener onSnapshot actif
 var fbLastSave=0;    // Timestamp dernière sauvegarde locale
 var MASTER_PWD=null; // Hash du mot de passe maître (admin plateforme)
@@ -1682,6 +1685,8 @@ function openApp(){
   initSelects();
   loadTheme();
   init();
+  // Démarrer la synchronisation temps réel
+  if(FILE_ID) startRealtimeSync(FILE_ID);
   document.getElementById('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
 
@@ -1828,6 +1833,7 @@ function saveToFirebase(data){
   // Exclure photos et logo du payload principal (trop volumineux)
   var ph=data.photos, lg=data.logo;
   data.photos={};data.logo=null;
+  fbLastSave=Date.now(); // Marquer le moment de la sauvegarde
   db.collection('lycees').doc(FILE_ID).set({
     meta:{lycee:(data.config&&data.config.lycee)||'',updated:new Date().toISOString()},
     payload:JSON.stringify(data)
@@ -3504,7 +3510,52 @@ function setupAccessLycee(fileId){
   }
 }
 
-function bgSyncFirebase(fileId){} // Obsolète — Firebase chargé au démarrage
+function bgSyncFirebase(fileId){} // Obsolète
+
+// ===== SYNC TEMPS RÉEL =====
+function startRealtimeSync(fileId){
+  if(!fbEnabled||!db||!fileId)return;
+  // Arrêter le listener précédent si existant
+  if(fbListener){fbListener();fbListener=null;}
+
+  fbListener=db.collection('lycees').doc(fileId).onSnapshot(function(doc){
+    if(!doc.exists)return;
+    // Ignorer si c'est notre propre sauvegarde (éviter boucle)
+    var now=Date.now();
+    if(now-fbLastSave<3000)return; // Ignorer pendant 3s après une sauvegarde locale
+    try{
+      var fd=JSON.parse(doc.data().payload);
+      if(!fd)return;
+      // Recharger les données
+      loadFromObj(fd);
+      // Rafraîchir l'interface selon la page active
+      var activePage=document.querySelector('.pg.active');
+      if(activePage){
+        var id=activePage.id.replace('pg-','');
+        if(id==='accueil')rAccueil();
+        else if(id==='profs')rProfs();
+        else if(id==='absences')rAbs();
+        else if(id==='conges')rConges();
+        else if(id==='stats')rStats();
+        else if(id==='alertes'){rAlertes();rRetours();}
+        else if(id==='archive')rArchPrev();
+        else if(id==='admin')rAdmin();
+        else if(id==='edt'){}
+      }
+      updBadge();
+      // Indicateur visuel discret
+      var si=document.getElementById('si');
+      if(si)si.textContent='🔄 '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){console.warn('onSnapshot parse error:',e);}
+  },function(err){
+    console.warn('onSnapshot error:',err);
+  });
+  console.log('✅ Sync temps réel démarré pour',fileId);
+}
+
+function stopRealtimeSync(){
+  if(fbListener){fbListener();fbListener=null;}
+}
 
 function newLycee(){showSetup();}
 
