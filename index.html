@@ -345,6 +345,7 @@ table{min-width:520px;}
   .ni{min-width:44px;padding:5px 7px;}
   #ct{padding:8px;}
 }
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 #toast{position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#1a1a2e,#2c3e7a);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);display:none;z-index:9997;}
 #notif{position:fixed;top:16px;right:16px;background:#fff;border-left:4px solid #2980b9;padding:14px 18px;border-radius:12px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.12);z-index:8888;max-width:320px;display:none;}
 </style>
@@ -1193,6 +1194,8 @@ var FILE_ID=DAT.file_id||null;
 var db=null;
 var fbEnabled=false;
 var fbSyncing=false;
+var fbListener=null; // Listener onSnapshot actif
+var fbLastSave=0;    // Timestamp dernière sauvegarde locale
 var MASTER_PWD=null; // Hash du mot de passe maître (admin plateforme)
 var MASTER_KEY='gap_master_pwd'; // Clé localStorage
 // Règle Firestore à ajouter: match /logos/{id} { allow read, write: if true; }
@@ -1831,9 +1834,10 @@ function saveToFirebase(data){
   }).then(function(){
     data.photos=ph;data.logo=lg;
     fbSyncing=false;
+    fbLastSave=Date.now(); // Ignorer notre propre update dans onSnapshot
     if(si)si.textContent='☁️ ✅ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     var saut=document.getElementById('si-auto');
-    if(saut)saut.innerHTML='<span id="fb-dot" style="width:7px;height:7px;border-radius:50%;background:#27ae60;display:inline-block;margin-right:4px;"></span>Cloud synchronisé';
+    if(saut)saut.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:#27ae60;display:inline-block;margin-right:4px;animation:pulse 2s infinite;"></span>En direct';
     // Sauvegarder le logo dans un document séparé
     if(lg)saveLogoToFirebase(lg);
   }).catch(function(e){
