@@ -1444,7 +1444,7 @@ async function wzFinish(){
   DAT.pwd_main=h1;DAT.pwd_del=h2;DAT.pwd_adm=h3;
 
   // Sauvegarder immédiatement
-  autoSaveLocal();
+  fbSave();
   if(fbEnabled&&db) saveToFirebase(buildSaveObj());
 
   // Mettre à jour le nom du lycée dans le compte Firebase
@@ -1798,27 +1798,24 @@ function init(){
     else{dot.style.background='#e74c3c';status.textContent='Mode hors ligne';}
   },1200);
   document.getElementById('hero-an').textContent=an.replace('-','–');
-  setInterval(function(){if(unsaved)autoSaveLocal();},60000);
+  setInterval(function(){if(unsaved)fbSave();},60000);
 }
 
 // ===== SAUVEGARDE =====
-function getStorageKey(){
-  return FILE_ID?'gap_data_'+FILE_ID:'gap_data_default';
+function fbSave(){
+  // Sauvegarder dans Firebase — source unique de vérité
+  if(!fbEnabled||!db||!FILE_ID){
+    console.warn('Firebase non disponible — données non sauvegardées');
+    var si=document.getElementById('si');
+    if(si)si.textContent='⚠️ Hors ligne';
+    return;
+  }
+  saveToFirebase(buildSaveObj());
 }
 
-function autoSaveLocal(){
-  var data=buildSaveObj();
-  unsaved=false;
-  // Version en ligne : sauvegarder uniquement dans Firebase
-  if(fbEnabled&&db&&FILE_ID){
-    saveToFirebase(data);
-  } else {
-    // Hors ligne : fallback localStorage
-    try{localStorage.setItem(getStorageKey(),JSON.stringify(data));}catch(e){}
-    var si=document.getElementById('si');
-    if(si)si.textContent='💾 Local '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  }
-}
+// Alias pour compatibilité avec le code existant
+function autoSaveLocal(){fbSave();}
+function getStorageKey(){return 'gap_data_'+FILE_ID;}
 
 function saveToFirebase(data){
   if(!fbEnabled||!db||!FILE_ID||fbSyncing)return;
@@ -1908,7 +1905,7 @@ function impLogo(){
         // Sauvegarder dans Firebase immédiatement
         saveLogoToFirebase(logoData, FILE_ID);
         // Aussi forcer la sauvegarde des données
-        autoSaveLocal();
+        fbSave();
         toast('✅ Logo importé et synchronisé !');
       };img.src=ev.target.result;
     };r.readAsDataURL(f);
@@ -1954,7 +1951,7 @@ function supprimerLogo(){
 function save(){
   var data=buildSaveObj();
   var json=JSON.stringify(data);
-  autoSaveLocal();
+  fbSave();
   // Télécharger le fichier HTML mis à jour
   var html=document.documentElement.outerHTML;
   var marker=html.indexOf('<script id="D"');var end=html.indexOf('<\/script>',marker)+9;
@@ -2117,11 +2114,10 @@ function addProf(){
   var disc=document.getElementById('np-d').value;
   if(!nom){alert('Entrez un nom.');return;}
   var np={id:nid++,nom:nom.toUpperCase(),disc:disc,sexe:document.getElementById('np-sx').value,dn:document.getElementById('np-dn').value,sm:document.getElementById('np-sm').value,de:document.getElementById('np-de').value,nv:document.getElementById('np-nv').value,dom:document.getElementById('np-do').value.trim(),af:document.getElementById('np-af').value.trim(),extra:getDynFields('np-dyn')};
-  profs.push(np);fillProfSelects();cm('m-ap');
+  profs.push(np);fillProfSelects();cm('m-ap');fbSave();
   ['np-n','np-dn','np-de','np-do','np-af'].forEach(function(id){document.getElementById(id).value='';});
   ['np-sx','np-sm','np-nv'].forEach(function(id){document.getElementById(id).selectedIndex=0;});
-  document.getElementById('np-dyn').innerHTML='';
-  unsaved=true;autoSaveLocal();rProfs();toast('✅ Professeur ajouté !');
+  document.getElementById('np-dyn').innerHTML=''; fbSave();rProfs();toast('✅ Professeur ajouté !');
 }
 
 function openEditProf(id){
@@ -2136,9 +2132,7 @@ function openEditProf(id){
   setDynFields('ep-dyn',p.extra||[]);om('m-ep');
 }
 
-function saveProf(){
-  unsaved=true;
-  var id=parseInt(document.getElementById('ep-id').value);
+function saveProf(){ var id=parseInt(document.getElementById('ep-id').value);
   var p=profs.find(function(x){return x.id===id;});if(!p)return;
   p.nom=document.getElementById('ep-n').value.trim().toUpperCase()||p.nom;
   p.disc=document.getElementById('ep-d').value;
@@ -2150,7 +2144,7 @@ function saveProf(){
   p.dom=document.getElementById('ep-do').value.trim();
   p.af=document.getElementById('ep-af').value.trim();
   p.extra=getDynFields('ep-dyn');
-  cm('m-ep');rProfs();autoSaveLocal();toast('✅ Profil mis à jour !');
+  cm('m-ep');rProfs();fbSave();toast('✅ Profil mis à jour !');
 }
 
 // ===== SUPPRESSION =====
@@ -2158,8 +2152,8 @@ function askDel(id,type){pdId=id;pdType=type;document.getElementById('del-pwd').
 async function confDel(){
   var h=await sha256(document.getElementById('del-pwd').value);
   if(h!==PWD_DEL){document.getElementById('del-err').style.display='block';return;}
-  if(pdType==='abs'){absMap[an]=A().filter(function(x){return x.i!==pdId;});autoSaveLocal();rAbs();rRec();updBadge();rAccueil();toast('Absence supprimée.');}
-  else if(pdType==='prof'){profs=profs.filter(function(p){return p.id!==pdId;});autoSaveLocal();rProfs();rAccueil();toast('Professeur retiré.');}
+  if(pdType==='abs'){absMap[an]=A().filter(function(x){return x.i!==pdId;});fbSave();rAbs();rRec();updBadge();rAccueil();toast('Absence supprimée.');}
+  else if(pdType==='prof'){profs=profs.filter(function(p){return p.id!==pdId;});fbSave();rProfs();rAccueil();toast('Professeur retiré.');}
   cm('m-del');
 }
 
@@ -2171,9 +2165,9 @@ function getF(){
   return{i:Date.now(),pi:p.id,n:p.nom,d:p.disc,dt:document.getElementById('s-dt').value,hd:document.getElementById('s-hd').value,hf:document.getElementById('s-hf').value,sa:document.getElementById('s-sa').value,st:'NJ'};
 }
 function ex(r){return{id:r.i,profId:r.pi,nom:r.n,disc:r.d,date:r.dt,hdebut:r.hd,hfin:r.hf,salle:r.sa,statut:r.st==='NJ'?'Non justifiée':'Justifiée'};}
-function enrAbs(){var f=getF();if(!f)return;A().unshift(f);unsaved=true;autoSaveLocal();rAbs();rRec();updBadge();rAccueil();toast('✅ Absence enregistrée !');}
+function enrAbs(){var f=getF();if(!f)return;A().unshift(f); fbSave();rAbs();rRec();updBadge();rAccueil();toast('✅ Absence enregistrée !');}
 function genPDFForm(){var f=getF();if(!f)return;genPDF(ex(f));}
-function enrEtPDF(){var f=getF();if(!f)return;A().unshift(f);unsaved=true;autoSaveLocal();rAbs();rRec();updBadge();rAccueil();genPDF(ex(f));toast('✅ Enregistrée + PDF !');}
+function enrEtPDF(){var f=getF();if(!f)return;A().unshift(f); fbSave();rAbs();rRec();updBadge();rAccueil();genPDF(ex(f));toast('✅ Enregistrée + PDF !');}
 function genById(id){var r=A().find(function(x){return x.i===id;});if(r)genPDF(ex(r));}
 
 function rRec(){
@@ -2202,7 +2196,7 @@ function rAbs(){
   }).join(''):'<tr><td colspan="8" style="text-align:center;color:#aaa;padding:18px;">Aucune absence</td></tr>';
 }
 
-function chSt(id,v){var r=A().find(function(x){return x.i===id;});if(r){r.st=v;unsaved=true;autoSaveLocal();updBadge();}}
+function chSt(id,v){var r=A().find(function(x){return x.i===id;});if(r){r.st=v; fbSave();updBadge();}}
 
 // ===== RAPPORT PDF MENSUEL =====
 function rPDF(){
@@ -2291,7 +2285,7 @@ function addCg(){
   var p=profs.find(function(x){return x.id==pid;});
   if(!p){alert('Sélectionnez un professeur.');return;}
   C().push({id:Date.now(),profId:p.id,nom:p.nom,disc:p.disc,type:document.getElementById('cg-t').value,debut:document.getElementById('cg-db').value,fin:document.getElementById('cg-fn').value,actif:true});
-  cm('m-ac');unsaved=true;autoSaveLocal();rConges();rProfs();toast('✅ Congé enregistré !');
+  cm('m-ac');fbSave();rConges();rProfs();toast('✅ Congé enregistré !');
 }
 
 function jrs(fin){return Math.ceil((new Date(fin)-new Date())/86400000);}
@@ -2314,8 +2308,7 @@ function reint(id){
   var c=C().find(function(x){return x.id===id;});
   if(c&&confirm('Réintégration de '+c.nom+' ?')){
     c.actif=false;c.dr=new Date().toISOString().split('T')[0];
-    CA().unshift(Object.assign({},c));
-    unsaved=true;autoSaveLocal();rConges();rProfs();toast('✅ '+c.nom+' réintégré(e) !');
+    CA().unshift(Object.assign({},c)); fbSave();rConges();rProfs();toast('✅ '+c.nom+' réintégré(e) !');
   }
 }
 
@@ -2392,14 +2385,14 @@ function addSlot(){
   slots.push({jour:jour,hd:hd,hf:hf,salle:salle,classe:classe});
   rEdtSlots(pid);document.getElementById('edt-cl').value='';
   if(parseInt(document.getElementById('g-p').value)===pid)loadGrid();
-  unsaved=true;autoSaveLocal();toast('✅ Créneau ajouté !');
+  fbSave();toast('✅ Créneau ajouté !');
 }
 
 function clearEdt(){
   var pid=parseInt(document.getElementById('edt-p').value);if(!pid)return;
   var p=profs.find(function(x){return x.id===pid;});
   if(!confirm('Effacer tout l\'EDT de '+p.nom+' ?'))return;
-  edtMap[pid]=[];rEdtSlots(pid);unsaved=true;autoSaveLocal();toast('EDT effacé.');
+  edtMap[pid]=[];rEdtSlots(pid); fbSave();toast('EDT effacé.');
 }
 
 function openModSlot(pid,si){
@@ -2410,9 +2403,7 @@ function openModSlot(pid,si){
   om('m-edt');
 }
 
-function saveSlot(){
-  unsaved=true;
-  var newPid=parseInt(document.getElementById('me-p').value)||modPid;
+function saveSlot(){ var newPid=parseInt(document.getElementById('me-p').value)||modPid;
   var jour=document.getElementById('me-j').value,hd=document.getElementById('me-hd').value,hf=document.getElementById('me-hf').value,salle=document.getElementById('me-sa').value,classe=document.getElementById('me-cl').value.trim();
   if(tm(hf)<=tm(hd)){alert('Heure de fin doit être après le début.');return;}
   if(newPid!==modPid){
@@ -2425,7 +2416,7 @@ function saveSlot(){
     if(parseInt(document.getElementById('edt-p').value)===modPid)rEdtSlots(modPid);
     if(parseInt(document.getElementById('edt-p').value)===newPid)rEdtSlots(newPid);
     if(parseInt(document.getElementById('g-p').value)===modPid||parseInt(document.getElementById('g-p').value)===newPid)loadGrid();
-    autoSaveLocal();toast('✅ Créneau transféré !');modPid=null;modIdx=null;return;
+    fbSave();toast('✅ Créneau transféré !');modPid=null;modIdx=null;return;
   }
   var slots=E(modPid);var s=slots[modIdx];
   var dup=slots.find(function(x,i){return i!==modIdx&&x.jour===jour&&tm(x.hd)<tm(hf)&&tm(x.hf)>tm(hd);});
@@ -2435,23 +2426,21 @@ function saveSlot(){
   cm('m-edt');rEdtSlots(modPid);
   if(parseInt(document.getElementById('g-p').value)===modPid)loadGrid();
   if(parseInt(document.getElementById('ev-p').value)===modPid)viewEdt();
-  autoSaveLocal();toast('✅ Créneau modifié !');modPid=null;modIdx=null;
+  fbSave();toast('✅ Créneau modifié !');modPid=null;modIdx=null;
 }
 
 function delSlotModal(){
   if(!confirm('Supprimer ce créneau ?'))return;
   E(modPid).splice(modIdx,1);cm('m-edt');
   if(parseInt(document.getElementById('edt-p').value)===modPid)rEdtSlots(modPid);
-  if(parseInt(document.getElementById('g-p').value)===modPid)loadGrid();
-  unsaved=true;autoSaveLocal();toast('Créneau supprimé.');modPid=null;modIdx=null;
+  if(parseInt(document.getElementById('g-p').value)===modPid)loadGrid(); fbSave();toast('Créneau supprimé.');modPid=null;modIdx=null;
 }
 
 function askDelSlot(pid,si){
   var s=sortSlots(pid)[si];var ri=E(pid).indexOf(s);
   if(!confirm('Supprimer ce créneau ?'))return;
   E(pid).splice(ri,1);rEdtSlots(pid);
-  if(parseInt(document.getElementById('g-p').value)===pid)loadGrid();
-  unsaved=true;autoSaveLocal();
+  if(parseInt(document.getElementById('g-p').value)===pid)loadGrid(); fbSave();
 }
 
 // ===== GRILLE VISUELLE =====
@@ -2502,7 +2491,7 @@ function addGridCell(pid,jour,hd,hf){
   slots.push({jour:jour,hd:hd,hf:hf,salle:salle,classe:classe});
   renderGrid(pid);
   if(parseInt(document.getElementById('edt-p').value)===pid)rEdtSlots(pid);
-  unsaved=true;autoSaveLocal();toast('✅ Créneau ajouté !');
+  fbSave();toast('✅ Créneau ajouté !');
 }
 
 function openModSlotGrid(pid,idx){
@@ -2584,7 +2573,7 @@ function quickSearch(){
 }
 
 function mkA(pid,dt,hd,hf,sa){var p=profs.find(function(x){return x.id===pid;});return{i:Date.now()+pid,pi:p.id,n:p.nom,d:p.disc,dt:dt,hd:hd,hf:hf,sa:sa,st:'NJ'};}
-function qEnr(pid,dt,hd,hf,sa){A().unshift(mkA(pid,dt,hd,hf,sa));unsaved=true;autoSaveLocal();rAbs();rRec();updBadge();rAccueil();toast('✅ Absence enregistrée !');}
+function qEnr(pid,dt,hd,hf,sa){A().unshift(mkA(pid,dt,hd,hf,sa)); fbSave();rAbs();rRec();updBadge();rAccueil();toast('✅ Absence enregistrée !');}
 function qPDF(pid,dt,hd,hf,sa){var p=profs.find(function(x){return x.id===pid;});genPDF({id:Date.now(),nom:p.nom,disc:p.disc,date:dt,hdebut:hd,hfin:hf,salle:sa,statut:'Non justifiée'});}
 function qBoth(pid,dt,hd,hf,sa){qEnr(pid,dt,hd,hf,sa);qPDF(pid,dt,hd,hf,sa);}
 
@@ -2607,7 +2596,7 @@ function importEdtStruct(){
     slots.push({jour:jN,hd:hd,hf:hf,salle:salle,classe:classe});ok++;
   });
   document.getElementById('edt-struct-res').innerHTML='<span style="color:var(--teal);font-weight:700;">✅ '+ok+' créneau(x) importé(s)</span>'+(errs.length?'<br><span style="color:var(--acc);">⚠️ '+errs.join('<br>')+'</span>':'');
-  if(ok>0){unsaved=true;autoSaveLocal();}
+  if(ok>0){fbSave();}
   toast('✅ '+ok+' créneaux importés !');
 }
 
@@ -2657,7 +2646,7 @@ function analyseEdtTxt(txt){
     }
   });
   document.getElementById('edt-import-res').innerHTML='<span style="color:var(--teal);font-weight:700;">✅ '+ok+' créneau(x) détecté(s) et importé(s)</span>'+(errs.length?'<br><span style="color:var(--acc);">'+errs.join('<br>')+'</span>':'')+'<br><small style="color:#7f8c8d;">Vérifiez dans "Consulter EDT".</small>';
-  if(ok>0){unsaved=true;autoSaveLocal();}
+  if(ok>0){fbSave();}
   toast('✅ '+ok+' créneaux importés !');
 }
 
@@ -2805,14 +2794,11 @@ function arDel(){
   var s=document.getElementById('ar-sel').value;
   if(s===an){alert('Impossible de supprimer l\'année active.');return;}
   if(!confirm('Supprimer DÉFINITIVEMENT toutes les données de '+s+' ?'))return;
-  delete absMap[s];delete cgMap[s];delete cgaMap[s];
-  unsaved=true;autoSaveLocal();fillAnSelects();rArchPrev();
+  delete absMap[s];delete cgMap[s];delete cgaMap[s]; fbSave();fillAnSelects();rArchPrev();
   toast('🗑 Données de '+s+' supprimées.');
 }
 
-window.addEventListener('beforeunload',function(e){
-  if(unsaved){var msg='⚠️ Données non sauvegardées !';e.preventDefault();e.returnValue=msg;return msg;}
-});
+// beforeunload supprimé — sauvegarde Firebase automatique
 </script>
 <script>
 // ===== PDF HELPERS =====
@@ -3075,7 +3061,7 @@ function admUpdateConfig(){
   document.getElementById('hero-welcome').textContent='Bienvenue, '+CFG.titre+' '+(CFG.proviseur||'');
   document.getElementById('hero-devise').textContent=CFG.devise?'"'+CFG.devise+'"':'';
   document.getElementById('sb-ft').innerHTML=(CFG.proviseur?CFG.titre+' : <strong>'+CFG.proviseur+'</strong><br>':'')+'Conçu avec ♥️ par Neiman Galab';
-  unsaved=true;autoSaveLocal();toast('✅ Infos mises à jour !');
+  fbSave();toast('✅ Infos mises à jour !');
 }
 
 async function admChangePwd(type){
@@ -3090,7 +3076,7 @@ async function admChangePwd(type){
     if(h===PWD_MAIN){alert('Ce mot de passe est identique au mot de passe principal.');return;}
     PWD_DEL=h;toast('✅ Mot de passe suppression changé !');
   }
-  document.getElementById(id).value='';unsaved=true;autoSaveLocal();
+  document.getElementById(id).value='';fbSave();
 }
 
 function renderAdmDiscs(){
@@ -3107,13 +3093,13 @@ function admAddDisc(){
   if(!v){alert('Saisissez une discipline.');return;}
   if(DISC.includes(v)){alert('Cette discipline existe déjà.');return;}
   DISC.push(v);document.getElementById('adm-disc-new').value='';
-  fillProfSelects();renderAdmDiscs();unsaved=true;autoSaveLocal();toast('✅ Discipline ajoutée !');
+  fillProfSelects();renderAdmDiscs();fbSave();toast('✅ Discipline ajoutée !');
 }
 
 function admDelDisc(d){
   if(!confirm('Supprimer la discipline "'+d+'" ?'))return;
   DISC=DISC.filter(function(x){return x!==d;});
-  fillProfSelects();renderAdmDiscs();unsaved=true;autoSaveLocal();toast('Discipline supprimée.');
+  fillProfSelects();renderAdmDiscs(); fbSave();toast('Discipline supprimée.');
 }
 
 function renderAdmSalles(){
@@ -3130,13 +3116,13 @@ function admAddSalle(){
   if(!v){alert('Saisissez une salle.');return;}
   if(SALLES.includes(v)){alert('Cette salle existe déjà.');return;}
   SALLES.push(v);document.getElementById('adm-salle-new').value='';
-  fillSalleSelects();renderAdmSalles();unsaved=true;autoSaveLocal();toast('✅ Salle ajoutée !');
+  fillSalleSelects();renderAdmSalles();fbSave();toast('✅ Salle ajoutée !');
 }
 
 function admDelSalle(s){
   if(!confirm('Supprimer la salle "'+s+'" ?'))return;
   SALLES=SALLES.filter(function(x){return x!==s;});
-  fillSalleSelects();renderAdmSalles();unsaved=true;autoSaveLocal();toast('Salle supprimée.');
+  fillSalleSelects();renderAdmSalles(); fbSave();toast('Salle supprimée.');
 }
 
 function admReset(){
@@ -3144,8 +3130,7 @@ function admReset(){
   if(!confirm('Dernière confirmation : Effacer TOUTES les données ?'))return;
   absMap={};cgMap={};cgaMap={};photos={};alLues={};
   absMap[an]=[];cgMap[an]=[];cgaMap[an]=[];
-  profs=[];nid=1;
-  unsaved=true;autoSaveLocal();rAccueil();rProfs();rAbs();rConges();updBadge();
+  profs=[];nid=1; fbSave();rAccueil();rProfs();rAbs();rConges();updBadge();
   toast('🗑 Données réinitialisées.');
 }
 
@@ -3169,8 +3154,7 @@ function admImportJSON(){
         if(!d.profs&&!d.abs){alert('Fichier JSON invalide.');return;}
         if(!confirm('Importer les données du fichier "'+f.name+'" ?\n\nCela remplacera toutes les données actuelles.'))return;
         loadFromObj(d);
-        initSelects();rAccueil();rProfs();rAbs();rConges();updBadge();rAdmin();
-        unsaved=true;autoSaveLocal();
+        initSelects();rAccueil();rProfs();rAbs();rConges();updBadge();rAdmin(); fbSave();
         toast('✅ Données importées !');
       }catch(err){alert('Erreur lecture JSON : '+err.message);}
     };r.readAsText(f);
@@ -3505,7 +3489,7 @@ function setupAccessLycee(fileId){
       if(doc.exists){
         try{
           var fd=JSON.parse(doc.data().payload);
-          loadFromObj(fd);autoSaveLocal();
+          loadFromObj(fd);fbSave();
           isAdmin=true;
           openApp();
         }catch(e){alert('Erreur lecture données.');}
