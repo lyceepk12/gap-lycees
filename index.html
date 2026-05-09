@@ -1535,13 +1535,18 @@ function chargerDepuisFirebase(fileId, admin){
         loadFromObj(fd);
         FILE_ID=fileId; // S'assurer que FILE_ID est défini
         if(admin)isAdmin=true;
-        // Charger le logo depuis Firebase (pour TOUS les utilisateurs)
+        // Ouvrir l'app d'abord, charger le logo ensuite
+        openApp();
+        // Logo chargé en arrière-plan et appliqué après
         loadLogoFromFirebase(fileId,function(logo){
           if(logo){
             logoData=logo;
+            // Mettre à jour TOUS les éléments logo dans l'interface
             updateLogoUI();
+            // Forcer la mise à jour sidebar logo
+            var sbLogo=document.getElementById('sb-logo-el');
+            if(sbLogo)sbLogo.innerHTML='<img src="'+logo+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
           }
-          openApp();
         });
       }catch(e){localStorage.removeItem('gap_current');showPortal();}
     }else{
@@ -1911,17 +1916,29 @@ function impLogo(){
 }
 
 function updateLogoUI(){
-  // Login
+  var img_html=logoData?'<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>':'';
+  var img_sb=logoData?'<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>':'';
+  // Login page
   var lbLogo=document.getElementById('lb-logo');
-  var lbTxt=document.getElementById('lb-logo-txt');
-  if(lbLogo&&logoData){lbLogo.innerHTML='<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';}
-  else if(lbTxt){lbTxt.style.display='inline';}
+  if(lbLogo){
+    if(logoData) lbLogo.innerHTML=img_html;
+    else lbLogo.innerHTML='<span id="lb-logo-txt">GAP</span>';
+  }
   // Sidebar
   var sbLogo=document.getElementById('sb-logo-el');
-  var sbTxt=document.getElementById('sb-logo-txt');
-  if(sbLogo&&logoData){sbLogo.innerHTML='<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';}
-  else if(sbTxt){sbTxt.style.display='inline';}
+  if(sbLogo){
+    if(logoData) sbLogo.innerHTML=img_sb;
+    else sbLogo.innerHTML='<span id="sb-logo-txt" style="font-size:13px;font-weight:900;color:#fff;">G</span>';
+  }
+  // Admin preview
+  var admLogo=document.getElementById('adm-logo-prev');
+  if(admLogo){
+    admLogo.innerHTML=logoData
+      ?'<img src="'+logoData+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;border:1.5px solid #e2e8f0;"/>'
+      :'<div style="width:60px;height:60px;border-radius:8px;background:#f0f7ff;border:2px dashed #c3dafe;display:flex;align-items:center;justify-content:center;font-size:24px;">🏫</div>';
+  }
 }
+
 
 function supprimerLogo(){
   if(!isAdmin){toast('⚠️ Seul l\'administrateur peut modifier le logo.');return;}
