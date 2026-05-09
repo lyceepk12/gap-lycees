@@ -1533,10 +1533,14 @@ function chargerDepuisFirebase(fileId, admin){
       try{
         var fd=JSON.parse(doc.data().payload);
         loadFromObj(fd);
+        FILE_ID=fileId; // S'assurer que FILE_ID est défini
         if(admin)isAdmin=true;
-        // Charger le logo depuis logos/FILE_ID
+        // Charger le logo depuis Firebase (pour TOUS les utilisateurs)
         loadLogoFromFirebase(fileId,function(logo){
-          if(logo){logoData=logo;updateLogoUI();}
+          if(logo){
+            logoData=logo;
+            updateLogoUI();
+          }
           openApp();
         });
       }catch(e){localStorage.removeItem('gap_current');showPortal();}
@@ -1838,28 +1842,29 @@ function saveToFirebase(data){
   });
 }
 
-function saveLogoToFirebase(logoBase64){
-  if(!fbEnabled||!db||!FILE_ID||!logoBase64)return;
-  // Découper le logo en chunks si > 500KB
-  var MAX=500000;
-  if(logoBase64.length>MAX){
-    // Compresser davantage
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas');
-      var ratio=Math.min(150/img.naturalWidth,150/img.naturalHeight,1);
-      c.width=Math.round(img.naturalWidth*ratio);
-      c.height=Math.round(img.naturalHeight*ratio);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      var compressed=c.toDataURL('image/jpeg',0.7);
-      db.collection('logos').doc(FILE_ID).set({logo:compressed,updated:new Date().toISOString()})
-        .catch(function(e){console.warn('Logo save:',e);});
-    };
-    img.src=logoBase64;
-  } else {
-    db.collection('logos').doc(FILE_ID).set({logo:logoBase64,updated:new Date().toISOString()})
-      .catch(function(e){console.warn('Logo save:',e);});
-  }
+function saveLogoToFirebase(logoBase64, targetId){
+  var docId=targetId||FILE_ID;
+  if(!fbEnabled||!db||!docId||!logoBase64)return;
+  // Compresser si nécessaire (max 200px, qualité 0.8)
+  var img=new Image();
+  img.onload=function(){
+    var canvas=document.createElement('canvas');
+    var MAX=200;
+    var ratio=Math.min(MAX/img.naturalWidth,MAX/img.naturalHeight,1);
+    canvas.width=Math.round(img.naturalWidth*ratio);
+    canvas.height=Math.round(img.naturalHeight*ratio);
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    var compressed=canvas.toDataURL('image/jpeg',0.8);
+    db.collection('logos').doc(docId).set({
+      logo:compressed,
+      updated:new Date().toISOString()
+    }).then(function(){
+      console.log('✅ Logo sauvegardé dans Firebase logos/'+docId);
+    }).catch(function(e){
+      console.warn('Logo save error:',e);
+    });
+  };
+  img.src=logoBase64;
 }
 
 function loadLogoFromFirebase(fileId,callback){
@@ -1896,7 +1901,9 @@ function impLogo(){
         logoData=c.toDataURL('image/jpeg',0.85);
         updateLogoUI();
         // Sauvegarder dans Firebase immédiatement
-        saveLogoToFirebase(logoData);
+        saveLogoToFirebase(logoData, FILE_ID);
+        // Aussi forcer la sauvegarde des données
+        autoSaveLocal();
         toast('✅ Logo importé et synchronisé !');
       };img.src=ev.target.result;
     };r.readAsDataURL(f);
