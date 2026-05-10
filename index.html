@@ -1464,7 +1464,7 @@ async function wzFinish(){
   }
 
   // Session active pour ce lycée
-  localStorage.setItem('gap_current',JSON.stringify({file_id:FILE_ID,admin:false,t:Date.now()}));
+  sessionStorage.setItem('gap_current',JSON.stringify({file_id:FILE_ID,admin:false,t:Date.now()}));
 
   // Fermer le wizard → ouvrir l'app directement
   document.getElementById('wizard').style.display='none';
@@ -1498,11 +1498,11 @@ window.addEventListener('load',function(){
   // 3. Session active dans localStorage ?
   var session=null;
   try{
-    var ss=localStorage.getItem('gap_current');
+    var ss=sessionStorage.getItem('gap_current');
     if(ss){
       var parsed=JSON.parse(ss);
       if(parsed&&parsed.file_id&&(Date.now()-parsed.t)<86400000) session=parsed;
-      else localStorage.removeItem('gap_current');
+      else sessionStorage.removeItem('gap_current');
     }
   }catch(e){}
 
@@ -1527,7 +1527,7 @@ function chargerDepuisFirebase(fileId, admin){
       if(admin)isAdmin=true;
       openApp();
     } else {
-      localStorage.removeItem('gap_current');
+      sessionStorage.removeItem('gap_current');
       showPortal();
     }
     return;
@@ -1554,9 +1554,9 @@ function chargerDepuisFirebase(fileId, admin){
             if(sbLogo)sbLogo.innerHTML='<img src="'+logo+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
           }
         });
-      }catch(e){localStorage.removeItem('gap_current');showPortal();}
+      }catch(e){sessionStorage.removeItem('gap_current');showPortal();}
     }else{
-      localStorage.removeItem('gap_current');
+      sessionStorage.removeItem('gap_current');
       showPortal();
     }
   }).catch(function(e){
@@ -1641,7 +1641,7 @@ async function loginAdmin(){
 function logout(){
   if(unsaved&&!confirm('Des données non sauvegardées seront perdues. Quitter ?'))return;
   // Effacer la session → empêche le rechargement auto après actualisation
-  localStorage.removeItem('gap_current');
+  sessionStorage.removeItem('gap_current');
   localStorage.removeItem('gap_setup_auth');
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
@@ -1674,7 +1674,7 @@ function openApp(){
   document.getElementById('hero-devise').textContent=CFG.devise?'"'+CFG.devise+'"':'';
 
   // Admin nav — visible seulement si accès admin GAP (depuis ?setup)
-  var isAdminAccess=function(){var cur=null;try{var s=localStorage.getItem('gap_current');if(s)cur=JSON.parse(s);}catch(e){}return cur&&cur.admin;}();
+  var isAdminAccess=function(){var cur=null;try{var s=sessionStorage.getItem('gap_current');if(s)cur=JSON.parse(s);}catch(e){}return cur&&cur.admin;}();
   if(isAdminAccess) isAdmin=true;
   document.getElementById('nav-admin').style.display=isAdmin?'block':'none';
 
@@ -3225,7 +3225,7 @@ async function portalLogin(){
       var h=await sha256(pass);
       if(h===lsAccount.pwd_hash){
         err.style.display='none';
-        localStorage.setItem('gap_current',JSON.stringify({file_id:lsAccount.file_id,admin:false,t:Date.now()}));
+        sessionStorage.setItem('gap_current',JSON.stringify({file_id:lsAccount.file_id,admin:false,t:Date.now()}));
         loadLycee(lsAccount.file_id, true);
         return;
       }
@@ -3246,7 +3246,7 @@ async function portalLogin(){
     // Sauvegarder en local pour usage hors-ligne
     localStorage.setItem('gap_account_'+user,JSON.stringify(acc));
     // Session active (persiste jusqu'à fermeture du navigateur)
-    localStorage.setItem('gap_current',JSON.stringify({file_id:acc.file_id,admin:false,t:Date.now()}));
+    sessionStorage.setItem('gap_current',JSON.stringify({file_id:acc.file_id,admin:false,t:Date.now()}));
     loadLycee(acc.file_id, true); // true = accès direct sans re-login
   }).catch(function(e){
     btn.disabled=false;btn.textContent='🔓 Se connecter';
@@ -3478,8 +3478,8 @@ async function setupChangeMaster(){
 function setupAccessLycee(fileId){
   if(!fileId){alert('Ce lycée n\'a pas encore été configuré.');return;}
   // Marquer la session comme accès admin GAP
-  localStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
-  localStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
+  sessionStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
+  sessionStorage.setItem('gap_current',JSON.stringify({file_id:fileId,admin:true,t:Date.now()}));
   // Cacher la page setup
   document.getElementById('setup-page').style.display='none';
   // Charger le lycée
@@ -3561,7 +3561,7 @@ function newLycee(){showSetup();}
 
 function backToSetup(){
   // Retourner au dashboard setup sans perdre l'auth
-  localStorage.removeItem('gap_current');
+  sessionStorage.removeItem('gap_current');
   isAdmin=false;
   document.getElementById('sb').style.display='none';
   document.getElementById('main').style.display='none';
