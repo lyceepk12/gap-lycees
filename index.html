@@ -1597,20 +1597,18 @@ function chargerDepuisFirebase(fileId, admin){
         loadFromObj(fd);
         FILE_ID=fileId;
         if(admin)isAdmin=true;
-        // Charger photos + logo en parallèle puis ouvrir l'app
-        var loaded={photos:false,logo:false};
-        function tryOpen(){
-          if(loaded.photos&&loaded.logo)openApp();
-        }
-        // Photos des professeurs
+        // Ouvrir l'app immédiatement
+        openApp();
+        // Charger photos et logo en arrière-plan (non bloquant)
         loadPhotosFromFirebase(fileId,function(ph){
-          if(ph&&Object.keys(ph).length>0)photos=ph;
-          loaded.photos=true;tryOpen();
+          if(ph&&Object.keys(ph).length>0){
+            photos=ph;
+            var pg=document.querySelector('.pg.active');
+            if(pg&&(pg.id==='pg-profs'||pg.id==='pg-accueil')){rProfs();rTrombi();}
+          }
         });
-        // Logo établissement
         loadLogoFromFirebase(fileId,function(logo){
-          if(logo){logoData=logo;}
-          loaded.logo=true;tryOpen();
+          if(logo){logoData=logo;updateLogoUI();}
         });
       }catch(e){sessionStorage.removeItem('gap_current');showPortal();}
     }else{
