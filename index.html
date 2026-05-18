@@ -1543,11 +1543,16 @@ function chargerDepuisFirebase(fileId, admin){
         if(admin)isAdmin=true;
         // Ouvrir l'app d'abord, charger le logo ensuite
         openApp();
-        // Logo chargé en arrière-plan et appliqué après openApp()
+        // Logo et photos chargés en arrière-plan
         loadLogoFromFirebase(fileId,function(logo){
-          if(logo){
-            logoData=logo;
-            updateLogoUI();
+          if(logo){logoData=logo;updateLogoUI();}
+        });
+        loadPhotosFromFirebase(fileId,function(ph){
+          if(ph&&Object.keys(ph).length>0){
+            photos=ph;
+            // Rafraîchir si page profs ou accueil visible
+            var pg=document.querySelector('.pg.active');
+            if(pg&&(pg.id==='pg-profs'||pg.id==='pg-accueil')){rProfs();rTrombi();}
           }
         });
       }catch(e){sessionStorage.removeItem('gap_current');showPortal();}
@@ -1686,6 +1691,8 @@ function openApp(){
   document.getElementById('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   // Appliquer logo si déjà chargé
   if(logoData)updateLogoUI();
+  // Appliquer photos si déjà chargées
+  if(photos&&Object.keys(photos).length>0){rProfs();rTrombi();}
 }
 
 // ===== HELPERS =====
@@ -1884,6 +1891,22 @@ function loadLogoFromFirebase(fileId,callback){
   }).catch(function(){callback(null);});
 }
 
+function savePhotosToFirebase(){
+  if(!fbEnabled||!db||!FILE_ID)return;
+  if(!photos||Object.keys(photos).length===0)return;
+  db.collection('photos').doc(FILE_ID).set({
+    photos:photos,
+    updated:new Date().toISOString()
+  }).catch(function(e){console.warn('Photos save:',e);});
+}
+
+function loadPhotosFromFirebase(fileId,callback){
+  if(!fbEnabled||!db){callback({});return;}
+  db.collection('photos').doc(fileId).get().then(function(doc){
+    callback(doc.exists?(doc.data().photos||{}):{});
+  }).catch(function(){callback({});});
+}
+
 // loadFromFirebase supprimé — utiliser chargerDepuisFirebase
 
 // syncFromCloud supprimé — données toujours depuis Firebase
@@ -2042,7 +2065,7 @@ function openFiche(id){
 
 function supprPhoto(id){
   if(!confirm('Supprimer la photo ?'))return;
-  delete photos[id];rProfs();rTrombi();openFiche(id);toast('Photo supprimée.');
+  delete photos[id];savePhotosToFirebase();rProfs();rTrombi();openFiche(id);toast('Photo supprimée.');
 }
 
 function impPhoto(pid){
@@ -2059,9 +2082,10 @@ function impPhoto(pid){
         var ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
         ctx.drawImage(img,0,0,c.width,c.height);
         photos[pid]=c.toDataURL('image/jpeg',0.88);
+        savePhotosToFirebase();
         rProfs();rTrombi();
         if(document.getElementById('m-fiche').classList.contains('open'))openFiche(pid);
-        toast('📷 Photo importée !');
+        toast('📷 Photo importée et synchronisée !');
       };img.src=ev.target.result;
     };r.readAsDataURL(f);
   };inp.click();
