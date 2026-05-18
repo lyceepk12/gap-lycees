@@ -1543,15 +1543,11 @@ function chargerDepuisFirebase(fileId, admin){
         if(admin)isAdmin=true;
         // Ouvrir l'app d'abord, charger le logo ensuite
         openApp();
-        // Logo chargé en arrière-plan et appliqué après
+        // Logo chargé en arrière-plan et appliqué après openApp()
         loadLogoFromFirebase(fileId,function(logo){
           if(logo){
             logoData=logo;
-            // Mettre à jour TOUS les éléments logo dans l'interface
             updateLogoUI();
-            // Forcer la mise à jour sidebar logo
-            var sbLogo=document.getElementById('sb-logo-el');
-            if(sbLogo)sbLogo.innerHTML='<img src="'+logo+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>';
           }
         });
       }catch(e){sessionStorage.removeItem('gap_current');showPortal();}
@@ -1688,6 +1684,8 @@ function openApp(){
   // Démarrer la synchronisation temps réel
   if(FILE_ID) startRealtimeSync(FILE_ID);
   document.getElementById('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // Appliquer logo si déjà chargé
+  if(logoData)updateLogoUI();
 }
 
 // ===== HELPERS =====
