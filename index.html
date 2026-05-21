@@ -1062,7 +1062,9 @@ table{min-width:520px;}
             </div>
           </div>
           <div class="fg">
-            <div class="fgr"><label>Nom du lycée</label><input type="text" id="adm-lycee" oninput="admUpdateConfig()"/></div>
+            <div class="fgr"><label>Sigle de l'application (ex: GAP, GAEV...)</label><input type="text" id="adm-appname" placeholder="GAP" oninput="admUpdateConfig()"/></div>
+            <div class="fgr"><label>Nom complet de l'application</label><input type="text" id="adm-appfullname" placeholder="Gestion des Absences des Professeurs" oninput="admUpdateConfig()"/></div>
+            <div class="fgr"><label>Nom de l'établissement</label><input type="text" id="adm-lycee" oninput="admUpdateConfig()"/></div>
             <div class="fgr"><label>Ville</label><input type="text" id="adm-ville" oninput="admUpdateConfig()"/></div>
             <div class="fgr"><label>Nom du responsable</label><input type="text" id="adm-prov" oninput="admUpdateConfig()"/></div>
             <div class="fgr"><label>Titre / Fonction</label><input type="text" id="adm-titre" oninput="admUpdateConfig()"/></div>
@@ -1212,7 +1214,7 @@ var FB_CFG={
 }; // ID unique de ce fichier HTML
 
 // CONFIG établissement (chargée depuis DAT.config)
-var CFG={lycee:'',ville:'',pays:'République de Djibouti',devise:'',email:'',proviseur:'',titre:'Proviseur Adjoint chargé des Enseignants',an:'2025-2026'};
+var CFG={lycee:'',ville:'',pays:'République de Djibouti',devise:'',email:'',proviseur:'',titre:'Proviseur Adjoint chargé des Enseignants',an:'2025-2026',appName:'GAP',appFullName:'Gestion des Absences des Professeurs'};
 
 // Données
 var profs=DAT.profs||[];
@@ -1575,6 +1577,9 @@ function chargerDepuisFirebase(fileId, admin){
 }
 
 function loadFromObj(d){
+  // Réinitialiser logo et photos avant chargement
+  logoData=null;
+  photos={};
   if(d.config)CFG=Object.assign({},d.config);
   if(d.an)an=d.an;
   if(d.disc)DISC=d.disc;
@@ -1598,7 +1603,7 @@ function loadFromObj(d){
 // ===== LOGIN =====
 function showLoginScreen(){
   // Mettre à jour les textes du login avec la config
-  document.getElementById('lb-appname').textContent='Gestion des Absences des Professeurs — '+CFG.lycee;
+  document.getElementById('lb-appname').textContent=(CFG.appFullName||'Gestion des Absences des Professeurs')+' — '+CFG.lycee;
   document.getElementById('lb-devise').textContent=CFG.devise||'';
   document.getElementById('lb-school').textContent=CFG.lycee+(CFG.ville?' — '+CFG.ville:'');
   updateLogoUI();
@@ -1661,17 +1666,17 @@ function openApp(){
   document.getElementById('main').style.display='block';
 
   // Appliquer config visuelle
-  var appName='GAP — '+CFG.lycee;
+  var appName=(CFG.appName||'GAP')+' — '+CFG.lycee;
   document.getElementById('sb-appname').textContent=appName;
   document.getElementById('sb-lycee').textContent=CFG.lycee+(CFG.ville?' — '+CFG.ville:'');
   document.getElementById('sb-devise').textContent=CFG.devise||'';
   document.getElementById('ptitle').textContent=appName;
-  document.title='GAP — '+CFG.lycee;
+  document.title=(CFG.appName||'GAP')+' — '+CFG.lycee;
   document.getElementById('sb-ft').innerHTML=(CFG.proviseur?CFG.titre+' : <strong>'+CFG.proviseur+'</strong><br>':'')+'Conçu avec ♥️ par Neiman Galab';
 
   // Héro
   document.getElementById('hero-welcome').textContent='Bienvenue, '+CFG.titre+' '+(CFG.proviseur||'');
-  document.getElementById('hero-sub').textContent='GAP — Gestion des Absences des Professeurs — '+(CFG.lycee||'');
+  document.getElementById('hero-sub').textContent=(CFG.appName||'GAP')+' — '+(CFG.appFullName||'Gestion des Absences des Professeurs')+' — '+(CFG.lycee||'');
   document.getElementById('hero-devise').textContent=CFG.devise?'"'+CFG.devise+'"':'';
 
   // Admin nav — visible seulement si accès admin GAP (depuis ?setup)
@@ -1689,8 +1694,8 @@ function openApp(){
   // Démarrer la synchronisation temps réel
   if(FILE_ID) startRealtimeSync(FILE_ID);
   document.getElementById('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  // Appliquer logo si déjà chargé
-  if(logoData)updateLogoUI();
+  // Appliquer logo (ou réinitialiser si null)
+  updateLogoUI();
   // Appliquer photos si déjà chargées
   if(photos&&Object.keys(photos).length>0){rProfs();rTrombi();}
 }
@@ -1849,8 +1854,8 @@ function saveToFirebase(data){
     if(si)si.textContent='☁️ ✅ '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     var saut=document.getElementById('si-auto');
     if(saut)saut.innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:#27ae60;display:inline-block;margin-right:4px;animation:pulse 2s infinite;"></span>En direct';
-    // Sauvegarder le logo dans un document séparé
-    if(lg)saveLogoToFirebase(lg);
+    // Sauvegarder le logo dans un document séparé (capturer FILE_ID immédiatement)
+    if(lg)(function(fid,logo){saveLogoToFirebase(logo,fid);})(FILE_ID,lg);
   }).catch(function(e){
     data.photos=ph;data.logo=lg;
     fbSyncing=false;
@@ -1944,19 +1949,21 @@ function impLogo(){
 }
 
 function updateLogoUI(){
+  var nm=CFG.appName||'GAP';
+  var initial=nm.charAt(0).toUpperCase();
   var img_html=logoData?'<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>':'';
   var img_sb=logoData?'<img src="'+logoData+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:8px;"/>':'';
   // Login page
   var lbLogo=document.getElementById('lb-logo');
   if(lbLogo){
     if(logoData) lbLogo.innerHTML=img_html;
-    else lbLogo.innerHTML='<span id="lb-logo-txt">GAP</span>';
+    else lbLogo.innerHTML='<span id="lb-logo-txt">'+nm+'</span>';
   }
   // Sidebar
   var sbLogo=document.getElementById('sb-logo-el');
   if(sbLogo){
     if(logoData) sbLogo.innerHTML=img_sb;
-    else sbLogo.innerHTML='<span id="sb-logo-txt" style="font-size:13px;font-weight:900;color:#fff;">G</span>';
+    else sbLogo.innerHTML='<span id="sb-logo-txt" style="font-size:11px;font-weight:900;color:#fff;">'+initial+'</span>';
   }
   // Admin preview
   var admLogo=document.getElementById('adm-logo-prev');
@@ -3068,6 +3075,10 @@ function rAdmin(){
   // Logo preview
   var admLogoPrev=document.getElementById('adm-logo-prev');
   if(admLogoPrev){admLogoPrev.innerHTML=logoData?'<img src="'+logoData+'" style="width:60px;height:60px;object-fit:contain;border-radius:8px;border:1.5px solid #e2e8f0;"/>':'<div style="width:60px;height:60px;border-radius:8px;background:#f0f7ff;border:2px dashed #c3dafe;display:flex;align-items:center;justify-content:center;font-size:24px;">🏫</div>';}
+  var admAN=document.getElementById('adm-appname');
+  var admAFN=document.getElementById('adm-appfullname');
+  if(admAN)admAN.value=CFG.appName||'GAP';
+  if(admAFN)admAFN.value=CFG.appFullName||'Gestion des Absences des Professeurs';
   document.getElementById('adm-lycee').value=CFG.lycee||'';
   document.getElementById('adm-ville').value=CFG.ville||'';
   document.getElementById('adm-prov').value=CFG.proviseur||'';
@@ -3078,6 +3089,10 @@ function rAdmin(){
 }
 
 function admUpdateConfig(){
+  var an=document.getElementById('adm-appname');
+  var afn=document.getElementById('adm-appfullname');
+  if(an)CFG.appName=an.value.trim()||'GAP';
+  if(afn)CFG.appFullName=afn.value.trim()||'Gestion des Absences des Professeurs';
   CFG.lycee=document.getElementById('adm-lycee').value.trim();
   CFG.ville=document.getElementById('adm-ville').value.trim();
   CFG.proviseur=document.getElementById('adm-prov').value.trim();
@@ -3085,7 +3100,7 @@ function admUpdateConfig(){
   CFG.devise=document.getElementById('adm-devise').value.trim();
   CFG.email=document.getElementById('adm-email').value.trim();
   // Mettre à jour l'interface
-  var appName='GAP — '+CFG.lycee;
+  var appName=(CFG.appName||'GAP')+' — '+CFG.lycee;
   document.getElementById('sb-appname').textContent=appName;
   document.getElementById('sb-lycee').textContent=CFG.lycee+(CFG.ville?' — '+CFG.ville:'');
   document.getElementById('sb-devise').textContent=CFG.devise||'';
